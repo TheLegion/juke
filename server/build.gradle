@@ -1,0 +1,50 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE')
+    }
+}
+
+plugins {
+    id "org.openjfx.javafxplugin" version "0.0.8"
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+bootJar {
+    baseName = 'jukebox'
+    version = '0.1.0'
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+javafx {
+    version = "12.0.1"
+    modules = ['javafx.media']
+}
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-websocket'
+    compile 'org.webjars:stomp-websocket:2.3.3'
+    compile 'commons-codec:commons-codec:1.9'
+    compile 'commons-io:commons-io:2.6'
+    compile 'one.util:streamex:0.6.8'
+    compile 'org.jsoup:jsoup:1.12.1'
+    compile 'org.springframework.boot:spring-boot-starter-jetty'
+
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+}
+
+configurations {
+    compile.exclude module: 'spring-boot-starter-tomcat'
+}
+

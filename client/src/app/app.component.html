@@ -1,0 +1,28 @@
+<div class="left">
+    <mat-form-field>
+        <mat-label>Поиск</mat-label>
+        <input #searchInput
+               (keyup.enter)="search(searchInput.value)"
+               matInput
+               placeholder="Тап-тап-тап"
+               type="text">
+    </mat-form-field>
+    <app-track (add)="addTrack(track)"
+               *ngFor="let track of searchResults$ | async"
+               [canAdd]="true"
+               [track]="track">
+    </app-track>
+</div>
+<div class="right">
+    <app-track-control (skip)="skipTrack()"
+                       (togglePlay)="togglePlay()"
+                       (volumeChange)="changeVolume($event)"
+                       *ngIf="current$ | async as current"
+                       [track]="current"
+                       [volume]="volume$ | async"
+                       class="current">
+    </app-track-control>
+    <div class="playlist">
+        <app-track *ngFor="let track of playlist$ | async" [track]="track"></app-track>
+    </div>
+</div>

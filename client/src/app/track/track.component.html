@@ -1,0 +1,11 @@
+<mat-card class="mat-primary">
+    <mat-card-content>
+        <div class="track-head">
+            <div class="track-title">{{track.title}}</div>
+            <div class="track-signer">{{track.singer}}</div>
+        </div>
+        <button (click)="addTrack()" *ngIf="canAdd" mat-icon-button>
+            <mat-icon>playlist_add</mat-icon>
+        </button>
+    </mat-card-content>
+</mat-card>
