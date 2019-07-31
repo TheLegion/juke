@@ -1,0 +1,21 @@
+<mat-card>
+    <mat-card-content>
+        <div>{{track.title}}</div>
+        <div>{{track.singer}}</div>
+    </mat-card-content>
+    <div class="actions">
+        <span>{{track.duration | duration}}</span>
+        <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
+            <mat-icon>{{togglePlayIcon}}</mat-icon>
+        </button>
+        <button (click)="skip.emit()" mat-icon-button>
+            <mat-icon>fast_forward</mat-icon>
+        </button>
+        <mat-slider (valueChange)="volumeChange.emit($event)"
+                    [max]="100"
+                    [min]="20"
+                    [thumbLabel]="true"
+                    [value]="volume">
+        </mat-slider>
+    </div>
+</mat-card>

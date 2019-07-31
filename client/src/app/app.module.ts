@@ -7,12 +7,14 @@ import {TrackComponent} from './track/track.component';
 import {TrackControlComponent} from './track-control/track-control.component';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {MatButtonModule, MatCardModule, MatIconModule, MatInputModule, MatSliderModule} from '@angular/material';
+import {DurationPipe} from './duration.pipe';
 
 @NgModule({
     declarations: [
         AppComponent,
         TrackComponent,
-        TrackControlComponent
+        TrackControlComponent,
+        DurationPipe
     ],
     imports: [
         BrowserModule,
