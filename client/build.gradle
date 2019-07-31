@@ -1,0 +1,21 @@
+plugins {
+    id "com.moowork.node" version "1.2.0"
+}
+apply plugin: 'base'
+
+task i(type: NpmTask) {
+    args = ['install']
+}
+
+task nodeBuild(type: NpmTask) {
+    args = ['run', 'build']
+    dependsOn i
+}
+
+build.dependsOn nodeBuild
+
+node {
+    version = '10.16.0'
+    npmVersion = '6.4.0'
+    download = true
+}
