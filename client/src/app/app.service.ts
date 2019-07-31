@@ -18,7 +18,7 @@ export class AppService {
     private readonly messages$: Observable<string>;
 
     constructor(private backend: RxStompService) {
-        const fullInfo: Observable<PlayerState> = this.backend.watch('/player/state').pipe(map(parse), shareReplay(1));
+        const fullInfo: Observable<PlayerState> = this.backend.watch('/app/player/state').pipe(map(parse), shareReplay(1));
         this.searchResults$ = this.backend.watch('/search/results').pipe(map(parse));
         this.playlist$ = merge(
             this.backend.watch('/player/playlist').pipe(map(parse)),
@@ -32,7 +32,7 @@ export class AppService {
             this.backend.watch('/player/volume').pipe(map(parse)),
             fullInfo.pipe(map(info => info.volume))
         );
-        this.messages$ = this.backend.watch('/message').pipe(map(parse));
+        this.messages$ = this.backend.watch('/message/info').pipe(map(msg => msg.body));
     }
 
     getSearchResults(): Observable<Track[]> {

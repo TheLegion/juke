@@ -6,6 +6,10 @@
     background: lightblue;
 }
 
+:host.download > mat-card {
+    background: lightgreen;
+}
+
 mat-card {
     display: flex;
     align-items: center;

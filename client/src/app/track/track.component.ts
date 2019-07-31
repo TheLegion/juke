@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import {Track} from '../model/track.model';
 import {TrackSource} from '../model/track-source';
+import {TrackState} from '../model/track-state.enum';
 
 @Component({
     selector: 'app-track',
@@ -42,7 +43,9 @@ export class TrackComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.track) {
             if (this.track) {
-                this.sourceTypeClass = this.track.source === TrackSource.Cache ? 'cache' : 'vk';
+                const fomrCache = this.track.source === TrackSource.Cache;
+                const isDownloading = this.track.state === TrackState.Downloading;
+                this.sourceTypeClass = fomrCache ? 'cache' : isDownloading ? 'download' : 'vk';
             } else {
                 this.sourceTypeClass = null;
             }

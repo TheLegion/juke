@@ -51,15 +51,15 @@ public class MainController {
         this.player.add(track);
     }
 
-    @SubscribeMapping("/state")
+    @SubscribeMapping("/player/state")
     public PlayerState getPlayerState() {
         return player.getState();
     }
 
     @MessageMapping("/player/skip")
-    @SendTo("/message")
+    @SendTo("/message/info")
     public String skipTrack(SimpMessageHeaderAccessor msg) {
-        String ip = (String) Objects.requireNonNull(msg.getSessionAttributes()).get("ip");
+        String ip = Objects.requireNonNull(msg.getSessionAttributes()).get("ip").toString();
         return this.player.skip(ip);
     }
 
@@ -74,15 +74,19 @@ public class MainController {
     }
 
     private void publishPlaylist(List<Track> playlist) {
-        this.brokerMessagingTemplate.convertAndSend("/player/playlist", playlist);
+        brokerMessagingTemplate.convertAndSend("/player/playlist", playlist);
     }
 
     private void publishCurrentTrack(Track track) {
-        this.brokerMessagingTemplate.convertAndSend("/player/current", track);
+        brokerMessagingTemplate.convertAndSend("/player/current", track);
     }
 
     private void publishVolume(Byte volume) {
-        this.brokerMessagingTemplate.convertAndSend("/player/volume", volume);
+        brokerMessagingTemplate.convertAndSend("/player/volume", volume);
+    }
+
+    private void publishTrack(Track track) {
+        brokerMessagingTemplate.convertAndSend("/player/track", track);
     }
 
 }

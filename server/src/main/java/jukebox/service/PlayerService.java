@@ -78,6 +78,10 @@ public class PlayerService {
         currentTrackListeners.forEach(listener -> listener.accept(currentTrack));
     }
 
+    private void notifyVolume() {
+        volumeListeners.forEach(listener -> listener.accept(volumeLevel));
+    }
+
     @PostConstruct
     private void playNext() {
         Track track = playList.stream().filter(x -> x.getState() == TrackState.Ready).findFirst().orElse(null);
@@ -109,6 +113,7 @@ public class PlayerService {
             player.stop();
             player = null;
             currentTrack = null;
+            votedToSkip = new ArrayList<>();
         }
         Path path = Paths.get(cacheDir, track.getId() + ".mp3");
         Media hit = new Media(path.toUri().toString());
@@ -197,10 +202,6 @@ public class PlayerService {
         notifyVolume();
     }
 
-    private void notifyVolume() {
-        volumeListeners.forEach(listener -> listener.accept(volumeLevel));
-    }
-
     private class DownloadTask extends RecursiveAction {
 
         private Track track;
@@ -216,6 +217,7 @@ public class PlayerService {
             try {
                 if (!Files.exists(trackPath)) {
                     track.setState(TrackState.Downloading);
+                    notifyPlaylist();
                     StreamEx.of(dataProviders)
                             .findFirst(provider -> provider.getSourceType() == track.getSource())
                             .map(provider -> provider.download(track))
@@ -223,6 +225,7 @@ public class PlayerService {
                 }
                 track.setState(TrackState.Ready);
                 track.setSource(TrackSource.Cache);
+                notifyPlaylist();
             }
             catch (Exception e) {
                 track.setState(TrackState.Failed);
