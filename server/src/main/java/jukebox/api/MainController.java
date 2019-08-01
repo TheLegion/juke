@@ -86,8 +86,4 @@ public class MainController {
         brokerMessagingTemplate.convertAndSend("/player/volume", volume);
     }
 
-    private void publishTrack(Track track) {
-        brokerMessagingTemplate.convertAndSend("/player/track", track);
-    }
-
 }
