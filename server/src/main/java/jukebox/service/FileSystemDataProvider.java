@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +66,7 @@ public class FileSystemDataProvider implements DataProvider {
         String singer = values[1];
         String title = values[2];
         String duration = values[3];
+        LocalTime parsedDuration = LocalTime.parse(duration, DateTimeFormatter.ofPattern("HH:mm:ss"));
 
         if (!Files.exists(Paths.get(cacheDir, hash + ".mp3"))) {
             return null;
@@ -72,7 +75,7 @@ public class FileSystemDataProvider implements DataProvider {
         track.setId(hash);
         track.setSinger(singer);
         track.setTitle(title);
-        track.setDuration(Long.parseLong(duration));
+        track.setDuration(parsedDuration.toSecondOfDay());
         track.setSource(TrackSource.Cache);
         track.setState(TrackState.Ready);
         return track;

@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -134,6 +136,7 @@ public class PlayerService {
                        .filter(x -> x.getSourceType() == TrackSource.Cache)
                        .findFirst()
                        .map(provider -> provider.search(""))
+                       .filter(list -> !list.isEmpty())
                        .map(list -> list.get(new Random().nextInt(list.size())))
                        .orElse(null);
     }
@@ -226,6 +229,9 @@ public class PlayerService {
                 track.setState(TrackState.Ready);
                 track.setSource(TrackSource.Cache);
                 notifyPlaylist();
+                if (currentTrack == null) {
+                    playNext();
+                }
             }
             catch (Exception e) {
                 track.setState(TrackState.Failed);
@@ -236,12 +242,15 @@ public class PlayerService {
         private void saveTrack(Path trackPath, byte[] data) {
             try {
                 Files.write(trackPath, data);
+                long duration = track.getDuration();
+                String formattedDuration = LocalTime.ofSecondOfDay(duration)
+                                                    .format(DateTimeFormatter.ofPattern("HH:mm:ss"));
                 Files.writeString(
                         Paths.get(cacheDir, "hashmap.txt"),
                         track.getId()
                                 + "|" + track.getSinger().trim()
                                 + "|" + track.getTitle().trim()
-                                + "|" + track.getDuration()
+                                + "|" + formattedDuration
                                 + System.getProperty("line.separator"),
                         StandardOpenOption.APPEND,
                         StandardOpenOption.CREATE

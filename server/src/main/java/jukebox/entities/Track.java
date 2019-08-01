@@ -4,7 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @Getter
 @Setter
@@ -33,8 +36,15 @@ public class Track {
     }
 
     public String getHash() {
-        String input = ((this.singer.trim() + this.title.trim() + this.duration).toUpperCase());
-        return DigestUtils.md5Hex(input);
+        LocalTime time = LocalTime.ofSecondOfDay(this.duration);
+        String formattedTime = time.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String input = (this.singer.trim() + this.title.trim() + formattedTime).toUpperCase();
+        try {
+            return DigestUtils.md5Hex(input.getBytes("cp1251"));
+        }
+        catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
