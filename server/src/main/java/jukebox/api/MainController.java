@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,8 +60,8 @@ public class MainController {
     @MessageMapping("/player/skip")
     @SendTo("/message/info")
     public String skipTrack(SimpMessageHeaderAccessor msg) {
-        String ip = Objects.requireNonNull(msg.getSessionAttributes()).get("ip").toString();
-        return this.player.skip(ip);
+        InetSocketAddress ip = (InetSocketAddress) Objects.requireNonNull(msg.getSessionAttributes()).get("ip");
+        return this.player.skip(ip.getHostString());
     }
 
     @MessageMapping("/player/toggle-play")

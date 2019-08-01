@@ -8,6 +8,8 @@ import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
 import one.util.streamex.StreamEx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${cache.dir}")
     private String cacheDir;
@@ -127,6 +131,7 @@ public class PlayerService {
             currentTrack = null;
             playNext();
         });
+        logger.info("Play now: {}", track);
         player.play();
         currentTrack.setState(TrackState.Playing);
     }
