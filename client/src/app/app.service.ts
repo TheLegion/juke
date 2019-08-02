@@ -1,16 +1,16 @@
 import {Injectable} from '@angular/core';
-import {merge, Observable} from 'rxjs';
+import {merge, Observable, Subject} from 'rxjs';
 import {RxStompService} from '@stomp/ng2-stompjs';
 import {Track} from './model/track.model';
-import {map, shareReplay} from 'rxjs/operators';
+import {map, shareReplay, switchMap} from 'rxjs/operators';
 import {PlayerState} from './model/player-state.model';
-import {RxStompState} from '@stomp/rx-stomp';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AppService {
 
+    private readonly searchQuery$: Subject<string> = new Subject();
     private readonly searchResults$: Observable<Track[]>;
     private readonly playlist$: Observable<Track[]>;
     private readonly currentTrack$: Observable<Track>;
@@ -19,7 +19,10 @@ export class AppService {
 
     constructor(private backend: RxStompService) {
         const fullInfo: Observable<PlayerState> = this.backend.watch('/app/player/state').pipe(map(parse), shareReplay(1));
-        this.searchResults$ = this.backend.watch('/search/results').pipe(map(parse));
+        this.searchResults$ = this.searchQuery$.pipe(
+            switchMap(query => this.backend.watch('/app/search', {query})),
+            map(parse)
+        );
         this.playlist$ = merge(
             this.backend.watch('/player/playlist').pipe(map(parse)),
             fullInfo.pipe(map(info => info.playlist))
@@ -56,7 +59,7 @@ export class AppService {
     }
 
     search(query: string) {
-        this.backend.publish({destination: '/app/search', body: query});
+        this.searchQuery$.next(query);
     }
 
     addTrack(track: Track): void {
@@ -75,9 +78,6 @@ export class AppService {
         this.backend.publish({destination: '/app/player/volume', body: `${volume}`});
     }
 
-    getConnected(): Observable<boolean> {
-        return this.backend.connected$.pipe(map(state => state === RxStompState.OPEN));
-    }
 }
 
 function parse<T = any>(msg): T {

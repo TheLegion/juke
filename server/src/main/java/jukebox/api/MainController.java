@@ -5,8 +5,8 @@ import jukebox.entities.Track;
 import jukebox.service.DataProvider;
 import jukebox.service.PlayerService;
 import one.util.streamex.StreamEx;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -37,9 +37,8 @@ public class MainController {
         player.onVolumeChange(this::publishVolume);
     }
 
-    @MessageMapping("/search")
-    @SendTo("/search/results")
-    public List<Track> search(@Payload(required = false) String query) {
+    @SubscribeMapping("/search")
+    public List<Track> search(@Header(required = false) String query) {
         String searchQuery = query == null ? "" : query;
         return StreamEx.of(dataProviders)
                        .flatMap(provider -> provider.search(searchQuery).stream())

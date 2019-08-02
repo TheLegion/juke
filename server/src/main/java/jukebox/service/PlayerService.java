@@ -1,8 +1,9 @@
 package jukebox.service;
 
-import javafx.application.Platform;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.advanced.PlaybackEvent;
+import javazoom.jl.player.advanced.PlaybackListener;
+import jukebox.core.PausablePlayer;
 import jukebox.entities.PlayerState;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
@@ -14,6 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Port;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +35,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
-public class PlayerService {
+public class PlayerService extends PlaybackListener {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -45,7 +50,7 @@ public class PlayerService {
     private Track currentTrack;
     private List<DataProvider> dataProviders;
 
-    private MediaPlayer player;
+    private PausablePlayer player;
     private ForkJoinPool downloadPool = new ForkJoinPool();
     private List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
     private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
@@ -54,8 +59,6 @@ public class PlayerService {
 
     public PlayerService(List<DataProvider> dataProviders) {
         this.dataProviders = dataProviders;
-        Platform.startup(() -> {
-        });
     }
 
     public void onPlaylistChange(Consumer<List<Track>> listener) {
@@ -71,9 +74,8 @@ public class PlayerService {
     }
 
     public void add(Track track) {
-        downloadPool.execute(new DownloadTask(track));
         this.playList.add(track);
-        notifyPlaylist();
+        downloadPool.execute(new DownloadTask(track));
     }
 
     private void notifyPlaylist() {
@@ -115,25 +117,23 @@ public class PlayerService {
     }
 
     private void playTrack(Track track) {
-        if (currentTrack != null) {
-            player.stop();
-            player = null;
-            currentTrack = null;
-            votedToSkip = new ArrayList<>();
+        try {
+            if (currentTrack != null) {
+                player.stop();
+                player = null;
+                currentTrack = null;
+                votedToSkip = new ArrayList<>();
+            }
+            Path path = Paths.get(cacheDir, track.getId() + ".mp3");
+            currentTrack = track;
+            player = new PausablePlayer(Files.newInputStream(path), this);
+            logger.info("Play now: {}", track);
+            player.start();
+            currentTrack.setState(TrackState.Playing);
         }
-        Path path = Paths.get(cacheDir, track.getId() + ".mp3");
-        Media hit = new Media(path.toUri().toString());
-        currentTrack = track;
-        player = new MediaPlayer(hit);
-        player.setVolume(volumeLevel / 100.0);
-        player.setOnEndOfMedia(() -> {
-            player.stop();
-            currentTrack = null;
-            playNext();
-        });
-        logger.info("Play now: {}", track);
-        player.play();
-        currentTrack.setState(TrackState.Playing);
+        catch (JavaLayerException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Track getRandomTrack() {
@@ -177,16 +177,16 @@ public class PlayerService {
     }
 
     private void pause() {
-        if (player != null && player.getStatus() == MediaPlayer.Status.PLAYING) {
-            player.pause();
+        if (player != null) {
+            player.suspend();
             currentTrack.setState(TrackState.Ready);
             notifyCurrentTrack();
         }
     }
 
     private void play() {
-        if (player != null && player.getStatus() == MediaPlayer.Status.PAUSED) {
-            player.play();
+        if (player != null) {
+            player.resume();
             currentTrack.setState(TrackState.Playing);
             notifyCurrentTrack();
         }
@@ -204,10 +204,29 @@ public class PlayerService {
 
     public void setVolume(byte volume) {
         volumeLevel = volume;
-        if (player != null) {
-            player.setVolume(volumeLevel / 100.0);
+        Port.Info source = Port.Info.SPEAKER;
+
+        if (AudioSystem.isLineSupported(source)) {
+            try {
+                Port outline = (Port) AudioSystem.getLine(source);
+                outline.open();
+                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
+                volumeControl.setValue(volume / 100.0F);
+            }
+            catch (LineUnavailableException ex) {
+                ex.printStackTrace();
+            }
         }
         notifyVolume();
+    }
+
+    @Override
+    public void playbackFinished(PlaybackEvent evt) {
+        if (evt.getFrame() >= currentTrack.getDuration()) {
+            player.stop();
+            currentTrack = null;
+            playNext();
+        }
     }
 
     private class DownloadTask extends RecursiveAction {

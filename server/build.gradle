@@ -7,10 +7,6 @@ buildscript {
     }
 }
 
-plugins {
-    id "org.openjfx.javafxplugin" version "0.0.8"
-}
-
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -26,11 +22,6 @@ repositories {
     mavenCentral()
 }
 
-javafx {
-    version = "12.0.1"
-    modules = ['javafx.media']
-}
-
 dependencies {
     compile 'org.springframework.boot:spring-boot-starter-websocket'
     compile 'org.webjars:stomp-websocket:2.3.3'
@@ -39,6 +30,8 @@ dependencies {
     compile 'one.util:streamex:0.6.8'
     compile 'org.jsoup:jsoup:1.12.1'
     compile 'org.springframework.boot:spring-boot-starter-jetty'
+    compile group: 'javazoom', name: 'jlayer', version: '1.0.1'
+
 
     compileOnly 'org.projectlombok:lombok:1.18.8'
     annotationProcessor 'org.projectlombok:lombok:1.18.8'
@@ -46,5 +39,7 @@ dependencies {
 
 configurations {
     compile.exclude module: 'spring-boot-starter-tomcat'
+    compile.exclude module: 'hibernate-validator'
+
 }
 
