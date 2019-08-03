@@ -3,6 +3,7 @@ import {AppService} from './app.service';
 import {Observable, Subscription} from 'rxjs';
 import {Track} from './model/track.model';
 import {filter} from 'rxjs/operators';
+import {CdkDragDrop} from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'app-root',
@@ -15,7 +16,7 @@ export class AppComponent implements OnInit, OnDestroy {
     playlist$: Observable<Track[]>;
     current$: Observable<Track>;
     volume$: Observable<number>;
-
+    getId = getId;
     private sub = new Subscription();
 
     constructor(private service: AppService) {
@@ -56,4 +57,12 @@ export class AppComponent implements OnInit, OnDestroy {
     changeVolume(volume: number) {
         this.service.changeVolume(volume);
     }
+
+    onTrackDrag(event: CdkDragDrop<Track, Track>) {
+        this.service.setTrackPosition(event.item.data, event.currentIndex);
+    }
+}
+
+function getId(i: number, track: Track): string {
+    return track.id;
 }

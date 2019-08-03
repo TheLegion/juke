@@ -78,6 +78,12 @@ export class AppService {
         this.backend.publish({destination: '/app/player/volume', body: `${volume}`});
     }
 
+    setTrackPosition(data: Track, position: number) {
+        this.backend
+            .publish({
+                destination: '/app/player/position', body: JSON.stringify({trackId: data.id, position})
+            });
+    }
 }
 
 function parse<T = any>(msg): T {

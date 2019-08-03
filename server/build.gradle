@@ -24,14 +24,12 @@ repositories {
 
 dependencies {
     compile 'org.springframework.boot:spring-boot-starter-websocket'
-    compile 'org.webjars:stomp-websocket:2.3.3'
+    compile 'org.springframework.boot:spring-boot-starter-undertow'
     compile 'commons-codec:commons-codec:1.9'
     compile 'commons-io:commons-io:2.6'
     compile 'one.util:streamex:0.6.8'
     compile 'org.jsoup:jsoup:1.12.1'
-    compile 'org.springframework.boot:spring-boot-starter-jetty'
     compile group: 'javazoom', name: 'jlayer', version: '1.0.1'
-
 
     compileOnly 'org.projectlombok:lombok:1.18.8'
     annotationProcessor 'org.projectlombok:lombok:1.18.8'
@@ -40,6 +38,8 @@ dependencies {
 configurations {
     compile.exclude module: 'spring-boot-starter-tomcat'
     compile.exclude module: 'hibernate-validator'
-
+    compile.exclude module: 'log4j-to-slf4j'
+    compile.exclude module: 'jul-to-slf4j'
+    compile.exclude module: 'log4j-api'
 }
 

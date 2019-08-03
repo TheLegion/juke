@@ -73,6 +73,11 @@ public class MainController {
         this.player.setVolume(volume);
     }
 
+    @MessageMapping("/player/position")
+    public void setTrackPosition(TrackPosition trackPosition) {
+        this.player.setTrackPosition(trackPosition);
+    }
+
     private void publishPlaylist(List<Track> playlist) {
         brokerMessagingTemplate.convertAndSend("/player/playlist", playlist);
     }

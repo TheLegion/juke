@@ -8,7 +8,7 @@
                type="text">
     </mat-form-field>
     <app-track (add)="addTrack(track)"
-               *ngFor="let track of searchResults$ | async"
+               *ngFor="let track of searchResults$ | async; trackBy: getId"
                [canAdd]="true"
                [track]="track">
     </app-track>
@@ -22,7 +22,10 @@
                        [volume]="volume$ | async"
                        class="current">
     </app-track-control>
-    <div cdkDropList class="playlist">
-        <app-track *ngFor="let track of playlist$ | async" [track]="track" cdkDrag></app-track>
+    <div (cdkDropListDropped)="onTrackDrag($event)" cdkDropList class="playlist">
+        <app-track *ngFor="let track of playlist$ | async; trackBy: getId"
+                   [cdkDragData]="track" [track]="track"
+                   cdkDrag>
+        </app-track>
     </div>
 </div>

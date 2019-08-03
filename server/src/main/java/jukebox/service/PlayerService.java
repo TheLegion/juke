@@ -2,6 +2,7 @@ package jukebox.service;
 
 import javazoom.jl.player.advanced.PlaybackEvent;
 import javazoom.jl.player.advanced.PlaybackListener;
+import jukebox.api.TrackPosition;
 import jukebox.core.ThreadPlayer;
 import jukebox.entities.PlayerState;
 import jukebox.entities.Track;
@@ -237,6 +238,15 @@ public class PlayerService extends PlaybackListener {
     public void playbackFinished(PlaybackEvent evt) {
         currentTrack = null;
         playNext();
+    }
+
+    public void setTrackPosition(TrackPosition trackPosition) {
+        Track track = StreamEx.of(playList)
+                              .findFirst(t -> t.getId().equals(trackPosition.trackId))
+                              .orElseThrow();
+        playList.remove(track);
+        playList.add(trackPosition.position, track);
+        notifyPlaylist();
     }
 
     private class DownloadTask extends RecursiveAction {

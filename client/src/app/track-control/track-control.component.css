@@ -16,6 +16,7 @@ mat-card-content {
     flex-direction: column;
     justify-content: center;
     margin-bottom: 0;
+    font-size: 16px;
 }
 
 mat-card-content > div {
