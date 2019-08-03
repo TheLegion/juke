@@ -1,9 +1,8 @@
 package jukebox.service;
 
-import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.advanced.PlaybackEvent;
 import javazoom.jl.player.advanced.PlaybackListener;
-import jukebox.core.PausablePlayer;
+import jukebox.core.ThreadPlayer;
 import jukebox.entities.PlayerState;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
@@ -26,9 +25,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
@@ -39,26 +36,24 @@ public class PlayerService extends PlaybackListener {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${cache.dir}")
     private String cacheDir;
-
-    @Value("${play.random}")
-    private String playRandomFromCache;
 
     private byte volumeLevel = 100;
     private List<Track> playList = new ArrayList<>();
     private Track currentTrack;
     private List<DataProvider> dataProviders;
 
-    private PausablePlayer player;
+    private ThreadPlayer player;
     private ForkJoinPool downloadPool = new ForkJoinPool();
     private List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
     private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
     private List<Consumer<Byte>> volumeListeners = new ArrayList<>();
-    private List<String> votedToSkip = new ArrayList<>();
+    private Set<String> votedToSkip = new HashSet<>();
 
-    public PlayerService(List<DataProvider> dataProviders) {
+    public PlayerService(List<DataProvider> dataProviders, @Value("${cache.dir}") String cacheDir) {
         this.dataProviders = dataProviders;
+        this.cacheDir = cacheDir;
+        player = new ThreadPlayer(this);
     }
 
     public void onPlaylistChange(Consumer<List<Track>> listener) {
@@ -95,17 +90,9 @@ public class PlayerService extends PlaybackListener {
         Track track = playList.stream().filter(x -> x.getState() == TrackState.Ready).findFirst().orElse(null);
         if (track != null) {
             playList.remove(track);
-            playTrack(track);
             notifyPlaylist();
-            currentTrack = track;
-            notifyCurrentTrack();
-        } else if (playList.size() == 0 && Boolean.parseBoolean(playRandomFromCache)) {
-            Track randomTrack = chooseRandom();
-            if (randomTrack != null) {
-                playTrack(randomTrack);
-                currentTrack = randomTrack;
-                notifyCurrentTrack();
-            }
+        } else if (playList.size() == 0) {
+            track = chooseRandom();
         }
 
         List<Track> tracksToRemove = playList.stream().filter(x -> x.getState() == TrackState.Failed)
@@ -114,25 +101,27 @@ public class PlayerService extends PlaybackListener {
             playList.removeAll(tracksToRemove);
             notifyPlaylist();
         }
+
+        if (track != null) {
+            playTrack(track);
+        }
     }
 
     private void playTrack(Track track) {
-        try {
-            if (currentTrack != null) {
-                player.stop();
-                player = null;
-                currentTrack = null;
-                votedToSkip = new ArrayList<>();
-            }
-            Path path = Paths.get(cacheDir, track.getId() + ".mp3");
-            currentTrack = track;
-            player = new PausablePlayer(Files.newInputStream(path), this);
-            logger.info("Play now: {}", track);
-            player.start();
-            currentTrack.setState(TrackState.Playing);
+        if (player == null) {
+            player = new ThreadPlayer(this);
         }
-        catch (JavaLayerException | IOException e) {
-            throw new RuntimeException(e);
+        votedToSkip.clear();
+        Path path = Paths.get(cacheDir, track.getId() + ".mp3");
+        currentTrack = track;
+        player.setFile(path);
+        logger.info("Play now: {}", track);
+        currentTrack.setState(TrackState.Playing);
+        notifyCurrentTrack();
+        if (Thread.currentThread() instanceof ThreadPlayer) {
+            player.play();
+        } else {
+            player.start();
         }
     }
 
@@ -169,9 +158,33 @@ public class PlayerService extends PlaybackListener {
         votedToSkip.add(ip);
         int needToSkip = currentTrack.isRandomlyChosen() ? 1 : 4;
         if (votedToSkip.size() >= needToSkip) {
+            player.stop();
+            player = new ThreadPlayer(this);
             this.playNext();
         } else {
-            return "Нужно ещё " + (needToSkip - votedToSkip.size()) + " голосов. Агитируй!";
+            int needVotesToSkip = needToSkip - votedToSkip.size();
+            String votesText = "";
+            switch (needVotesToSkip % 10) {
+                case 1:
+                    votesText = "голос";
+                    break;
+
+                case 2:
+                case 3:
+                case 4:
+                    votesText = "голоса";
+                    break;
+
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                case 0:
+                    votesText = "голосов";
+                    break;
+            }
+            return "Нужно ещё " + needVotesToSkip + " " + votesText + ". Агитируй!";
         }
         return "";
     }
@@ -222,11 +235,8 @@ public class PlayerService extends PlaybackListener {
 
     @Override
     public void playbackFinished(PlaybackEvent evt) {
-        if (evt.getFrame() >= currentTrack.getDuration()) {
-            player.stop();
-            currentTrack = null;
-            playNext();
-        }
+        currentTrack = null;
+        playNext();
     }
 
     private class DownloadTask extends RecursiveAction {

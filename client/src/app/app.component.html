@@ -22,7 +22,7 @@
                        [volume]="volume$ | async"
                        class="current">
     </app-track-control>
-    <div class="playlist">
-        <app-track *ngFor="let track of playlist$ | async" [track]="track"></app-track>
+    <div cdkDropList class="playlist">
+        <app-track *ngFor="let track of playlist$ | async" [track]="track" cdkDrag></app-track>
     </div>
 </div>

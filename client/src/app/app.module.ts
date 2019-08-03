@@ -8,6 +8,7 @@ import {TrackControlComponent} from './track-control/track-control.component';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {MatButtonModule, MatCardModule, MatIconModule, MatInputModule, MatSliderModule} from '@angular/material';
 import {DurationPipe} from './duration.pipe';
+import {DragDropModule} from '@angular/cdk/drag-drop';
 
 @NgModule({
     declarations: [
@@ -23,7 +24,8 @@ import {DurationPipe} from './duration.pipe';
         MatSliderModule,
         MatButtonModule,
         MatIconModule,
-        MatInputModule
+        MatInputModule,
+        DragDropModule
     ],
     providers: [
         {
