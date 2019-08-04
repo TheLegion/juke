@@ -29,8 +29,7 @@ mat-card {
     justify-content: center;
 }
 
-.track-signer,
-.track-title {
+.track-head > div {
     white-space: pre-wrap;
 }
 

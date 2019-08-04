@@ -7,11 +7,13 @@
                placeholder="Тап-тап-тап"
                type="text">
     </mat-form-field>
-    <app-track (add)="addTrack(track)"
-               *ngFor="let track of searchResults$ | async; trackBy: getId"
-               [canAdd]="true"
-               [track]="track">
-    </app-track>
+    <cdk-virtual-scroll-viewport class="search-results" itemSize="72">
+        <app-track (add)="addTrack(track)"
+                   *cdkVirtualFor="let track of searchResults$ | async; trackBy: getId; templateCacheSize: 5"
+                   [canAdd]="true"
+                   [track]="track">
+        </app-track>
+    </cdk-virtual-scroll-viewport>
 </div>
 <div class="right">
     <app-track-control (skip)="skipTrack()"
@@ -22,10 +24,14 @@
                        [volume]="volume$ | async"
                        class="current">
     </app-track-control>
-    <div (cdkDropListDropped)="onTrackDrag($event)" cdkDropList class="playlist">
-        <app-track *ngFor="let track of playlist$ | async; trackBy: getId"
-                   [cdkDragData]="track" [track]="track"
+    <cdk-virtual-scroll-viewport (cdkDropListDropped)="onTrackDrag($event)"
+                                 cdkDropList
+                                 class="playlist"
+                                 itemSize="72">
+        <app-track *cdkVirtualFor="let track of playlist$ | async; trackBy: getId; templateCacheSize: 5"
+                   [cdkDragData]="track"
+                   [track]="track"
                    cdkDrag>
         </app-track>
-    </div>
+    </cdk-virtual-scroll-viewport>
 </div>

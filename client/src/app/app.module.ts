@@ -9,6 +9,7 @@ import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {MatButtonModule, MatCardModule, MatIconModule, MatInputModule, MatSliderModule} from '@angular/material';
 import {DurationPipe} from './duration.pipe';
 import {DragDropModule} from '@angular/cdk/drag-drop';
+import {ScrollingModule} from '@angular/cdk/scrolling';
 
 @NgModule({
     declarations: [
@@ -25,7 +26,8 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
         MatButtonModule,
         MatIconModule,
         MatInputModule,
-        DragDropModule
+        DragDropModule,
+        ScrollingModule
     ],
     providers: [
         {

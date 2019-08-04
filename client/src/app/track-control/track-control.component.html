@@ -1,14 +1,14 @@
 <mat-card>
     <mat-card-content>
-        <div>{{track.title}}</div>
-        <div>{{track.singer}}</div>
+        <div [title]="track.title">{{track.title}}</div>
+        <div [title]="track.singer">{{track.singer}}</div>
     </mat-card-content>
     <div class="actions">
         <span>{{track.duration | duration}}</span>
         <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
             <mat-icon>{{togglePlayIcon}}</mat-icon>
         </button>
-        <button (click)="skip.emit()" mat-icon-button>
+        <button (click)="skip.emit()" mat-icon-button title="Скипануть">
             <mat-icon>fast_forward</mat-icon>
         </button>
         <mat-slider (valueChange)="volumeChange.emit($event)"
