@@ -4,4 +4,5 @@ export interface PlayerState {
     playlist: Track[];
     currentTrack: Track;
     volume: number;
+    playDuration: number;
 }

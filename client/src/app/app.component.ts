@@ -16,7 +16,9 @@ export class AppComponent implements OnInit, OnDestroy {
     playlist$: Observable<Track[]>;
     current$: Observable<Track>;
     volume$: Observable<number>;
+    playDuration$: Observable<number>;
     getId = getId;
+
     private sub = new Subscription();
 
     constructor(private service: AppService) {
@@ -24,6 +26,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.playlist$ = this.service.getPlaylist();
         this.current$ = this.service.getCurrentTrack();
         this.volume$ = this.service.getVolume();
+        this.playDuration$ = this.service.getPlayDuration();
     }
 
     search(query: string) {

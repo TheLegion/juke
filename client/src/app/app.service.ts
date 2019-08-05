@@ -11,11 +11,13 @@ import {PlayerState} from './model/player-state.model';
 export class AppService {
 
     private readonly searchQuery$: Subject<string> = new Subject();
+    private readonly skip$: Subject<void> = new Subject<void>();
     private readonly searchResults$: Observable<Track[]>;
     private readonly playlist$: Observable<Track[]>;
     private readonly currentTrack$: Observable<Track>;
     private readonly volume$: Observable<number>;
     private readonly messages$: Observable<string>;
+    private readonly playDuration$: Observable<number>;
 
     constructor(private backend: RxStompService) {
         const fullInfo: Observable<PlayerState> = this.backend.watch('/app/player/state').pipe(map(parse), shareReplay(1));
@@ -35,7 +37,11 @@ export class AppService {
             this.backend.watch('/player/volume').pipe(map(parse)),
             fullInfo.pipe(map(info => info.volume))
         );
-        this.messages$ = this.backend.watch('/message/info').pipe(map(msg => msg.body));
+        this.messages$ = this.skip$.pipe(
+            switchMap(() => backend.watch('/app/player/skip')),
+            map(msg => msg.body)
+        );
+        this.playDuration$ = fullInfo.pipe(map(info => info.playDuration));
     }
 
     getSearchResults(): Observable<Track[]> {
@@ -58,6 +64,10 @@ export class AppService {
         return this.messages$;
     }
 
+    getPlayDuration() {
+        return this.playDuration$;
+    }
+
     search(query: string) {
         this.searchQuery$.next(query);
     }
@@ -67,7 +77,7 @@ export class AppService {
     }
 
     skipTrack() {
-        this.backend.publish({destination: '/app/player/skip'});
+        this.skip$.next();
     }
 
     togglePlay() {

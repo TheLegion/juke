@@ -1,6 +1,18 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges
+} from '@angular/core';
 import {Track} from '../model/track.model';
 import {TrackState} from '../model/track-state.enum';
+import {interval, Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-track-control',
@@ -8,13 +20,16 @@ import {TrackState} from '../model/track-state.enum';
     styleUrls: ['./track-control.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TrackControlComponent implements OnInit, OnChanges {
+export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input()
     track: Track;
 
     @Input()
     volume: number;
+
+    @Input()
+    playDuration: number;
 
     @Output()
     skip: EventEmitter<void> = new EventEmitter();
@@ -27,10 +42,18 @@ export class TrackControlComponent implements OnInit, OnChanges {
 
     togglePlayIcon: string;
 
-    constructor() {
+    private sub: Subscription = new Subscription();
+
+    constructor(private detector: ChangeDetectorRef) {
     }
 
     ngOnInit() {
+        this.sub = interval(1000).subscribe(() => {
+            if (this.track.state === TrackState.Playing) {
+                this.playDuration++;
+                this.detector.markForCheck();
+            }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -47,7 +70,17 @@ export class TrackControlComponent implements OnInit, OnChanges {
                 default:
                     break;
             }
+            if (changes.track.previousValue) {
+                const trackChanged = changes.track.currentValue.id !== changes.track.previousValue.id;
+                if (!changes.playDuration && trackChanged) {
+                    this.playDuration = 0;
+                }
+            }
         }
+    }
+
+    ngOnDestroy(): void {
+        this.sub.unsubscribe();
     }
 
 }

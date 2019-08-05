@@ -1,7 +1,5 @@
 package jukebox.service;
 
-import javazoom.jl.player.advanced.PlaybackEvent;
-import javazoom.jl.player.advanced.PlaybackListener;
 import jukebox.api.TrackPosition;
 import jukebox.core.ThreadPlayer;
 import jukebox.entities.PlayerState;
@@ -26,35 +24,36 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
-public class PlayerService extends PlaybackListener {
+public class PlayerService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
+    private final ThreadPlayer player;
     private String cacheDir;
-
     private byte volumeLevel = 100;
     private List<Track> playList = new ArrayList<>();
     private Track currentTrack;
     private List<DataProvider> dataProviders;
-
-    private ThreadPlayer player;
     private ForkJoinPool downloadPool = new ForkJoinPool();
     private List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
     private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
     private List<Consumer<Byte>> volumeListeners = new ArrayList<>();
-    private Set<String> votedToSkip = new HashSet<>();
+    private Set<String> votedToSkip = new ConcurrentSkipListSet<>();
 
     public PlayerService(List<DataProvider> dataProviders, @Value("${cache.dir}") String cacheDir) {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
-        player = new ThreadPlayer(this);
+        player = new ThreadPlayer(this::playNext);
     }
 
     public void onPlaylistChange(Consumer<List<Track>> listener) {
@@ -72,6 +71,92 @@ public class PlayerService extends PlaybackListener {
     public void add(Track track) {
         this.playList.add(track);
         downloadPool.execute(new DownloadTask(track));
+    }
+
+    public PlayerState getState() {
+        return new PlayerState(playList, currentTrack, volumeLevel, this.player.getPlayDuration());
+    }
+
+    public String skip(String ip) {
+        if (currentTrack == null) {
+            return "Нечего скиповать.";
+        }
+        if (votedToSkip.contains(ip)) {
+            return "Ты уже голосовал против этой песни. Агитируй!";
+        }
+        votedToSkip.add(ip);
+        int needToSkip = currentTrack.isRandomlyChosen() ? 1 : 4;
+        if (votedToSkip.size() >= needToSkip) {
+            this.playNext();
+        } else {
+            int needVotesToSkip = needToSkip - votedToSkip.size();
+            String votesText = "";
+            switch (needVotesToSkip % 10) {
+                case 1:
+                    votesText = "голос";
+                    break;
+
+                case 2:
+                case 3:
+                case 4:
+                    votesText = "голоса";
+                    break;
+
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                case 0:
+                    votesText = "голосов";
+                    break;
+            }
+            return "Нужно ещё " + needVotesToSkip + " " + votesText + ". Агитируй!";
+        }
+        return "";
+    }
+
+    public synchronized void togglePlay() {
+        if (currentTrack == null) {
+            return;
+        }
+        if (currentTrack.getState() == TrackState.Ready) {
+            play();
+        } else if (currentTrack.getState() == TrackState.Playing) {
+            pause();
+        }
+    }
+
+    public void setVolume(byte volume) {
+        if (volume < 20) {
+            volume = 20;
+        } else if (volume > 100) {
+            volume = 100;
+        }
+        volumeLevel = volume;
+        Port.Info source = Port.Info.SPEAKER;
+
+        if (AudioSystem.isLineSupported(source)) {
+            try {
+                Port outline = (Port) AudioSystem.getLine(source);
+                outline.open();
+                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
+                volumeControl.setValue(volume / 100.0F);
+            }
+            catch (LineUnavailableException ex) {
+                ex.printStackTrace();
+            }
+        }
+        notifyVolume();
+    }
+
+    public void setTrackPosition(TrackPosition trackPosition) {
+        Track track = StreamEx.of(playList)
+                              .findFirst(t -> t.getId().equals(trackPosition.trackId))
+                              .orElseThrow();
+        playList.remove(track);
+        playList.add(trackPosition.position, track);
+        notifyPlaylist();
     }
 
     private void notifyPlaylist() {
@@ -109,20 +194,19 @@ public class PlayerService extends PlaybackListener {
     }
 
     private void playTrack(Track track) {
-        if (player == null) {
-            player = new ThreadPlayer(this);
-        }
         votedToSkip.clear();
-        Path path = Paths.get(cacheDir, track.getId() + ".mp3");
         currentTrack = track;
+        Path path = Paths.get(cacheDir, track.getId() + ".mp3");
         player.setFile(path);
         logger.info("Play now: {}", track);
         currentTrack.setState(TrackState.Playing);
         notifyCurrentTrack();
-        if (Thread.currentThread() instanceof ThreadPlayer) {
+        if (Thread.currentThread() == player) {
             player.play();
-        } else {
+        } else if (player.getState() == Thread.State.NEW) {
             player.start();
+        } else {
+            throw new RuntimeException("How did I get here? :O");
         }
     }
 
@@ -145,108 +229,16 @@ public class PlayerService extends PlaybackListener {
         return t;
     }
 
-    public PlayerState getState() {
-        return new PlayerState(playList, currentTrack, volumeLevel);
-    }
-
-    public String skip(String ip) {
-        if (currentTrack == null) {
-            return "Нечего скиповать.";
-        }
-        if (votedToSkip.contains(ip)) {
-            return "Ты уже голосовал против этой песни. Агитируй!";
-        }
-        votedToSkip.add(ip);
-        int needToSkip = currentTrack.isRandomlyChosen() ? 1 : 4;
-        if (votedToSkip.size() >= needToSkip) {
-            player.stop();
-            player = new ThreadPlayer(this);
-            this.playNext();
-        } else {
-            int needVotesToSkip = needToSkip - votedToSkip.size();
-            String votesText = "";
-            switch (needVotesToSkip % 10) {
-                case 1:
-                    votesText = "голос";
-                    break;
-
-                case 2:
-                case 3:
-                case 4:
-                    votesText = "голоса";
-                    break;
-
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                case 0:
-                    votesText = "голосов";
-                    break;
-            }
-            return "Нужно ещё " + needVotesToSkip + " " + votesText + ". Агитируй!";
-        }
-        return "";
-    }
-
     private void pause() {
-        if (player != null) {
-            player.suspend();
-            currentTrack.setState(TrackState.Ready);
-            notifyCurrentTrack();
-        }
+        player.pause();
+        currentTrack.setState(TrackState.Ready);
+        notifyCurrentTrack();
     }
 
     private void play() {
-        if (player != null) {
-            player.resume();
-            currentTrack.setState(TrackState.Playing);
-            notifyCurrentTrack();
-        }
-    }
-
-    public void togglePlay() {
-        if (currentTrack != null) {
-            if (currentTrack.getState() == TrackState.Ready) {
-                play();
-            } else if (currentTrack.getState() == TrackState.Playing) {
-                pause();
-            }
-        }
-    }
-
-    public void setVolume(byte volume) {
-        volumeLevel = volume;
-        Port.Info source = Port.Info.SPEAKER;
-
-        if (AudioSystem.isLineSupported(source)) {
-            try {
-                Port outline = (Port) AudioSystem.getLine(source);
-                outline.open();
-                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
-                volumeControl.setValue(volume / 100.0F);
-            }
-            catch (LineUnavailableException ex) {
-                ex.printStackTrace();
-            }
-        }
-        notifyVolume();
-    }
-
-    @Override
-    public void playbackFinished(PlaybackEvent evt) {
-        currentTrack = null;
-        playNext();
-    }
-
-    public void setTrackPosition(TrackPosition trackPosition) {
-        Track track = StreamEx.of(playList)
-                              .findFirst(t -> t.getId().equals(trackPosition.trackId))
-                              .orElseThrow();
-        playList.remove(track);
-        playList.add(trackPosition.position, track);
-        notifyPlaylist();
+        player.continuePlay();
+        currentTrack.setState(TrackState.Playing);
+        notifyCurrentTrack();
     }
 
     private class DownloadTask extends RecursiveAction {

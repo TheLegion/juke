@@ -7,7 +7,6 @@ import jukebox.service.PlayerService;
 import one.util.streamex.StreamEx;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
@@ -56,8 +55,7 @@ public class MainController {
         return player.getState();
     }
 
-    @MessageMapping("/player/skip")
-    @SendTo("/message/info")
+    @SubscribeMapping("/player/skip")
     public String skipTrack(SimpMessageHeaderAccessor msg) {
         InetSocketAddress ip = (InetSocketAddress) Objects.requireNonNull(msg.getSessionAttributes()).get("ip");
         return this.player.skip(ip.getHostString());

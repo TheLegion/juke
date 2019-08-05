@@ -22,6 +22,7 @@
                        *ngIf="current$ | async as current"
                        [track]="current"
                        [volume]="volume$ | async"
+                       [playDuration]="playDuration$ | async"
                        class="current">
     </app-track-control>
     <cdk-virtual-scroll-viewport (cdkDropListDropped)="onTrackDrag($event)"

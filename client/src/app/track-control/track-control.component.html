@@ -1,10 +1,10 @@
 <mat-card>
-    <mat-card-content>
+    <div class="head">
         <div [title]="track.title">{{track.title}}</div>
         <div [title]="track.singer">{{track.singer}}</div>
-    </mat-card-content>
+    </div>
     <div class="actions">
-        <span>{{track.duration | duration}}</span>
+        <span>{{playDuration | duration}}/{{track.duration | duration}}</span>
         <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
             <mat-icon>{{togglePlayIcon}}</mat-icon>
         </button>
