@@ -26,20 +26,24 @@ public class ThreadPlayer extends Thread {
 
     public void play() {
         try {
-            startedOnDate = System.currentTimeMillis();
-            this.player.play();
-            onFinish.run();
+            while (true) {
+                startedOnDate = System.currentTimeMillis();
+                if (player != null) {
+                    this.player.play();
+                }
+                onFinish.run();
+                if (player == null) {
+                    sleep(500);
+                }
+            }
         }
-        catch (JavaLayerException e) {
+        catch (JavaLayerException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     public void setFile(Path path) {
         try {
-            if (player != null && !(Thread.currentThread() instanceof ThreadPlayer)) {
-                player.close();
-            }
             player = new AdvancedPlayer(Files.newInputStream(path));
         }
         catch (JavaLayerException | IOException e) {
@@ -59,6 +63,12 @@ public class ThreadPlayer extends Thread {
 
     public long getPlayDuration() {
         return (startedOnDuration + (System.currentTimeMillis() - startedOnDate)) / 1000;
+    }
+
+    public void skip() {
+        if (player != null && !(Thread.currentThread() instanceof ThreadPlayer)) {
+            player.close();
+        }
     }
 
 }

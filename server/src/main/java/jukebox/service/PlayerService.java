@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
@@ -54,6 +53,7 @@ public class PlayerService {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
         player = new ThreadPlayer(this::playNext);
+        player.start();
     }
 
     public void onPlaylistChange(Consumer<List<Track>> listener) {
@@ -81,13 +81,17 @@ public class PlayerService {
         if (currentTrack == null) {
             return "Нечего скиповать.";
         }
+        if (currentTrack.isRandomlyChosen()) {
+            player.skip();
+            return "";
+        }
         if (votedToSkip.contains(ip)) {
             return "Ты уже голосовал против этой песни. Агитируй!";
         }
         votedToSkip.add(ip);
-        int needToSkip = currentTrack.isRandomlyChosen() ? 1 : 4;
+        int needToSkip = 4;
         if (votedToSkip.size() >= needToSkip) {
-            this.playNext();
+            player.skip();
         } else {
             int needVotesToSkip = needToSkip - votedToSkip.size();
             String votesText = "";
@@ -171,7 +175,6 @@ public class PlayerService {
         volumeListeners.forEach(listener -> listener.accept(volumeLevel));
     }
 
-    @PostConstruct
     private void playNext() {
         Track track = playList.stream().filter(x -> x.getState() == TrackState.Ready).findFirst().orElse(null);
         if (track != null) {
@@ -203,10 +206,6 @@ public class PlayerService {
         notifyCurrentTrack();
         if (Thread.currentThread() == player) {
             player.play();
-        } else if (player.getState() == Thread.State.NEW) {
-            player.start();
-        } else {
-            throw new RuntimeException("How did I get here? :O");
         }
     }
 
@@ -265,9 +264,6 @@ public class PlayerService {
                 track.setState(TrackState.Ready);
                 track.setSource(TrackSource.Cache);
                 notifyPlaylist();
-                if (currentTrack == null) {
-                    playNext();
-                }
             }
             catch (Exception e) {
                 track.setState(TrackState.Failed);
