@@ -61,8 +61,8 @@ public class MainController {
 
     @SubscribeMapping("/player/skip")
     public String skipTrack(SimpMessageHeaderAccessor msg) {
-        InetSocketAddress ip = (InetSocketAddress) Objects.requireNonNull(msg.getSessionAttributes()).get("ip");
-        return this.player.skip(ip.getHostString());
+        String ip = (String) Objects.requireNonNull(msg.getSessionAttributes()).get("ip");
+        return this.player.skip(ip);
     }
 
     @MessageMapping("/player/toggle-play")
