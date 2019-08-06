@@ -33,3 +33,7 @@ mat-card {
 mat-slider {
     padding: 0 8px;
 }
+
+audio {
+    display: none;
+}

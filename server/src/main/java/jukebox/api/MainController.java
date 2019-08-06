@@ -11,10 +11,14 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Controller
 public class MainController {
@@ -74,6 +78,14 @@ public class MainController {
     @MessageMapping("/player/position")
     public void setTrackPosition(TrackPosition trackPosition) {
         this.player.setTrackPosition(trackPosition);
+    }
+
+    @GetMapping("/audio/stream")
+    public CompletableFuture<String> getAudioStream(HttpServletResponse response) throws IOException {
+        response.setContentType("audio/mp3");
+        response.flushBuffer();
+        player.registerAudioStream(response.getOutputStream());
+        return new CompletableFuture<>();
     }
 
     private void publishPlaylist(List<Track> playlist) {

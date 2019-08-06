@@ -11,6 +11,10 @@
         <button (click)="skip.emit()" mat-icon-button title="Скипануть">
             <mat-icon>fast_forward</mat-icon>
         </button>
+        <button (click)="toggleAudio()" [title]="audioTitle" mat-icon-button>
+            <mat-icon>{{audioIcon}}</mat-icon>
+        </button>
+
         <mat-slider (valueChange)="volumeChange.emit($event)"
                     [max]="100"
                     [min]="20"
@@ -18,4 +22,11 @@
                     [value]="volume">
         </mat-slider>
     </div>
+    <audio #audio
+           (ended)="setupAudioButton()"
+           (pause)="setupAudioButton()"
+           (play)="setupAudioButton()"
+           preload="none"
+           src="/audio/stream">
+    </audio>
 </mat-card>

@@ -3,9 +3,7 @@ package jukebox.core;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 
 public class ThreadPlayer extends Thread {
 
@@ -42,11 +40,12 @@ public class ThreadPlayer extends Thread {
         }
     }
 
-    public void setFile(Path path) {
+    public void setFile(InputStream stream) {
         try {
-            player = new AdvancedPlayer(Files.newInputStream(path));
+            player = new AdvancedPlayer(stream);
+            startedOnDuration = 0;
         }
-        catch (JavaLayerException | IOException e) {
+        catch (JavaLayerException e) {
             e.printStackTrace();
         }
     }

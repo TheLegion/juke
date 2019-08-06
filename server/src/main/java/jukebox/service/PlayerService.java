@@ -12,21 +12,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Port;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
@@ -48,6 +48,7 @@ public class PlayerService {
     private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
     private List<Consumer<Byte>> volumeListeners = new ArrayList<>();
     private Set<String> votedToSkip = new ConcurrentSkipListSet<>();
+    private List<OutputStream> audioStreams = new ArrayList<>();
 
     public PlayerService(List<DataProvider> dataProviders, @Value("${cache.dir}") String cacheDir) {
         this.dataProviders = dataProviders;
@@ -163,6 +164,10 @@ public class PlayerService {
         notifyPlaylist();
     }
 
+    public void registerAudioStream(ServletOutputStream outputStream) {
+        this.audioStreams.add(outputStream);
+    }
+
     private void notifyPlaylist() {
         playlistListeners.forEach(listener -> listener.accept(playList));
     }
@@ -197,15 +202,22 @@ public class PlayerService {
     }
 
     private void playTrack(Track track) {
-        votedToSkip.clear();
-        currentTrack = track;
-        Path path = Paths.get(cacheDir, track.getId() + ".mp3");
-        player.setFile(path);
-        logger.info("Play now: {}", track);
-        currentTrack.setState(TrackState.Playing);
-        notifyCurrentTrack();
-        if (Thread.currentThread() == player) {
-            player.play();
+        try {
+            votedToSkip.clear();
+            currentTrack = track;
+            Path path = Paths.get(cacheDir, track.getId() + ".mp3");
+            InputStream originalInputStream = Files.newInputStream(path);
+            InputStream stream = new WrappedInputStream(originalInputStream);
+            player.setFile(stream);
+            logger.info("Play now: {}", track);
+            currentTrack.setState(TrackState.Playing);
+            notifyCurrentTrack();
+            if (Thread.currentThread() == player) {
+                player.play();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -291,6 +303,100 @@ public class PlayerService {
             catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private class WrappedInputStream extends InputStream {
+        InputStream innerStream;
+
+        WrappedInputStream(InputStream innerStream) {
+            this.innerStream = innerStream;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return innerStream.read();
+        }
+
+        @Override
+        public String toString() {
+            return innerStream.toString();
+        }
+
+        @Override
+        public void skipNBytes(long n) throws IOException {
+            innerStream.skipNBytes(n);
+        }
+
+        @Override
+        public long transferTo(OutputStream out) throws IOException {
+            return innerStream.transferTo(out);
+        }
+
+        @Override
+        public synchronized void reset() throws IOException {
+            innerStream.reset();
+        }
+
+        @Override
+        public int readNBytes(byte[] b, int off, int len) throws IOException {
+            return innerStream.readNBytes(b, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            innerStream.close();
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            return innerStream.skip(n);
+        }
+
+        @Override
+        public int available() throws IOException {
+            return innerStream.available();
+        }
+
+        @Override
+        public byte[] readNBytes(int len) throws IOException {
+            return innerStream.readNBytes(len);
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int read = innerStream.read(b, off, len);
+            ListIterator<OutputStream> iterator = audioStreams.listIterator();
+            while (iterator.hasNext()) {
+                OutputStream stream = iterator.next();
+                try {
+                    stream.write(b);
+                }
+                catch (IOException e) {
+                    iterator.remove();
+                }
+            }
+            return read;
+        }
+
+        @Override
+        public int read(byte[] b) throws IOException {
+            return innerStream.read(b);
+        }
+
+        @Override
+        public byte[] readAllBytes() throws IOException {
+            return innerStream.readAllBytes();
+        }
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            innerStream.mark(readlimit);
+        }
+
+        @Override
+        public boolean markSupported() {
+            return innerStream.markSupported();
         }
     }
 }

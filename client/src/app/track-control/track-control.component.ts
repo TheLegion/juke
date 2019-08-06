@@ -2,13 +2,15 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    ElementRef,
     EventEmitter,
     Input,
     OnChanges,
     OnDestroy,
     OnInit,
     Output,
-    SimpleChanges
+    SimpleChanges,
+    ViewChild
 } from '@angular/core';
 import {Track} from '../model/track.model';
 import {TrackState} from '../model/track-state.enum';
@@ -41,6 +43,11 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
     volumeChange: EventEmitter<number> = new EventEmitter();
 
     togglePlayIcon: string;
+    audioIcon = 'headset';
+    audioTitle = 'Переключиться на наушники';
+
+    @ViewChild('audio', {static: true})
+    private audioElement: ElementRef<HTMLAudioElement>;
 
     private sub: Subscription = new Subscription();
 
@@ -83,4 +90,24 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
         this.sub.unsubscribe();
     }
 
+    toggleAudio() {
+        const audioElement = this.audioElement.nativeElement;
+        if (audioElement.paused) {
+            audioElement.load();
+            audioElement.play();
+        } else {
+            audioElement.pause();
+        }
+    }
+
+    setupAudioButton() {
+        const audioElement = this.audioElement.nativeElement;
+        if (audioElement.paused || audioElement.ended) {
+            this.audioIcon = 'headset';
+            this.audioTitle = 'Переключиться на наушники';
+        } else {
+            this.audioIcon = 'stop';
+            this.audioTitle = 'Отключить наушники';
+        }
+    }
 }
