@@ -49,13 +49,13 @@ export class TrackComponent implements OnInit, OnChanges {
             } else {
                 this.sourceTypeClass = null;
             }
-            this.canAdd = this.track['__added'];
+            this.canAdd = !this.track['__added'];
         }
     }
 
     addTrack() {
         this.add.emit();
         this.track['__added'] = true;
-        this.canAdd = this.track['__added'];
+        this.canAdd = !this.track['__added'];
     }
 }
