@@ -31,8 +31,13 @@ http {
     server {
         listen       80;
         server_name  localhost;
-        location /static/ {
+        
+	location /static/ {
         	alias {путь к клиенту};
+        }
+
+        location /audio/ {
+        	proxy_pass http://websocket;
         }
 
         location / {
@@ -46,9 +51,10 @@ http {
     		proxy_set_header Upgrade $http_upgrade;
     		proxy_set_header Connection "upgrade";
     		keepalive_timeout 604800;
-			proxy_connect_timeout 604800;
-			proxy_send_timeout 604800;
-			proxy_read_timeout 604800;
+		proxy_connect_timeout 604800;
+		proxy_send_timeout 604800;
+		proxy_read_timeout 604800;
+		proxy_set_header X-Real-IP $remote_addr;
         }
 
         error_page   500 502 503 504  /50x.html;
