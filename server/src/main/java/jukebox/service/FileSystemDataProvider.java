@@ -39,7 +39,7 @@ public class FileSystemDataProvider implements DataProvider {
 
             String[] queryWords = query.toUpperCase().split(" ");
 
-            List<String> lines = Files.readAllLines(hashmap);
+            List<String> lines = StreamEx.of(Files.readAllLines(hashmap)).filter(str -> !str.isEmpty()).toList();
             Collections.reverse(lines);
             Map<String, Integer> mostPossibleResults = StreamEx.of(lines)
                                                                .toMap(s -> s, s -> getRelevance(s, queryWords));
@@ -55,6 +55,10 @@ public class FileSystemDataProvider implements DataProvider {
             System.out.println("FileSystemDataProvider error, query " + query);
         }
         return Collections.emptyList();
+    }
+
+    public byte[] download(Track track) {
+        throw new UnsupportedOperationException();
     }
 
     private Track getTrackByHash(Map.Entry<String, Integer> entry) {
@@ -79,10 +83,6 @@ public class FileSystemDataProvider implements DataProvider {
         track.setSource(TrackSource.Cache);
         track.setState(TrackState.Ready);
         return track;
-    }
-
-    public byte[] download(Track track) {
-        throw new UnsupportedOperationException();
     }
 
     private boolean hasExactWord(String line, String word) {
