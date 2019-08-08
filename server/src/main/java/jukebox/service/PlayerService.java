@@ -158,7 +158,7 @@ public class PlayerService {
     public void setTrackPosition(TrackPosition trackPosition) {
         Track track = StreamEx.of(playList)
                               .findFirst(t -> t.getId().equals(trackPosition.trackId))
-                              .orElseThrow();
+                              .orElseThrow(RuntimeException::new);
         playList.remove(track);
         playList.add(trackPosition.position, track);
         notifyPlaylist();
@@ -289,13 +289,16 @@ public class PlayerService {
                 long duration = track.getDuration();
                 String formattedDuration = LocalTime.ofSecondOfDay(duration)
                                                     .format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-                Files.writeString(
-                        Paths.get(cacheDir, "hashmap.txt"),
+                List<String> str = Collections.singletonList(
                         track.getId()
                                 + "|" + track.getSinger().trim()
                                 + "|" + track.getTitle().trim()
                                 + "|" + formattedDuration
-                                + System.getProperty("line.separator"),
+                                + System.getProperty("line.separator")
+                );
+                Files.write(
+                        Paths.get(cacheDir, "hashmap.txt"),
+                        str,
                         StandardOpenOption.APPEND,
                         StandardOpenOption.CREATE
                 );
@@ -324,23 +327,8 @@ public class PlayerService {
         }
 
         @Override
-        public void skipNBytes(long n) throws IOException {
-            innerStream.skipNBytes(n);
-        }
-
-        @Override
-        public long transferTo(OutputStream out) throws IOException {
-            return innerStream.transferTo(out);
-        }
-
-        @Override
         public synchronized void reset() throws IOException {
             innerStream.reset();
-        }
-
-        @Override
-        public int readNBytes(byte[] b, int off, int len) throws IOException {
-            return innerStream.readNBytes(b, off, len);
         }
 
         @Override
@@ -356,11 +344,6 @@ public class PlayerService {
         @Override
         public int available() throws IOException {
             return innerStream.available();
-        }
-
-        @Override
-        public byte[] readNBytes(int len) throws IOException {
-            return innerStream.readNBytes(len);
         }
 
         @Override
@@ -382,11 +365,6 @@ public class PlayerService {
         @Override
         public int read(byte[] b) throws IOException {
             return innerStream.read(b);
-        }
-
-        @Override
-        public byte[] readAllBytes() throws IOException {
-            return innerStream.readAllBytes();
         }
 
         @Override
