@@ -185,7 +185,7 @@ public class PlayerService {
         if (track != null) {
             playList.remove(track);
             notifyPlaylist();
-        } else if (playList.size() == 0) {
+        } else {
             track = chooseRandom();
         }
 
