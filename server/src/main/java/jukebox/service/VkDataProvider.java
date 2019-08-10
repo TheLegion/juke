@@ -118,7 +118,7 @@ public class VkDataProvider implements DataProvider {
         return Collections.emptyList();
     }
 
-    public byte[] download(Track track) {
+    public InputStream download(Track track) {
         try {
             String trackUrl = track.getUri().toString();
             ScriptEngineManager manager = new ScriptEngineManager();
@@ -127,9 +127,7 @@ public class VkDataProvider implements DataProvider {
 
             URLConnection connection = new URL(decodedTrackUrl).openConnection();
             connection.setConnectTimeout(Integer.parseInt(downloadTimeout));
-            try (InputStream trackStream = connection.getInputStream()) {
-                return IOUtils.toByteArray(trackStream);
-            }
+            return connection.getInputStream();
         }
         catch (Exception e) {
             System.out.println("VKComDataProvider error: " + e.getMessage());

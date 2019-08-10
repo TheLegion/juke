@@ -19,6 +19,7 @@
     <app-track-control (skip)="skipTrack()"
                        (togglePlay)="togglePlay()"
                        (volumeChange)="changeVolume($event)"
+                       (shuffle)="shuffle()"
                        *ngIf="current$ | async as current"
                        [track]="current"
                        [volume]="volume$ | async"

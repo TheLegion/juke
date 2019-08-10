@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -78,6 +77,11 @@ public class MainController {
     @MessageMapping("/player/position")
     public void setTrackPosition(TrackPosition trackPosition) {
         this.player.setTrackPosition(trackPosition);
+    }
+
+    @MessageMapping("/player/shuffle")
+    public void shuffle() {
+        this.player.shuffle();
     }
 
     @GetMapping("/audio/stream")

@@ -3,11 +3,14 @@ package jukebox.service;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import one.util.streamex.StreamEx;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +19,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,16 +40,12 @@ public class FileSystemDataProvider implements DataProvider {
             }
 
             String[] queryWords = query.toUpperCase().split(" ");
-
-            List<String> lines = StreamEx.of(Files.readAllLines(hashmap)).filter(str -> !str.isEmpty()).toList();
-            Collections.reverse(lines);
-            Map<String, Integer> mostPossibleResults = StreamEx.of(lines)
-                                                               .toMap(s -> s, s -> getRelevance(s, queryWords));
-
-            return StreamEx.of(mostPossibleResults.entrySet())
-                           .filter(entry -> entry.getValue() > 0)
-                           .sorted((f, s) -> -1 * Integer.compare(f.getValue(), s.getValue()))
-                           .map(this::getTrackByHash)
+            return StreamEx.of(Files.readAllLines(hashmap))
+                           .filter(str -> !str.isEmpty())
+                           .map(s -> getRelevance(s, queryWords))
+                           .nonNull()
+                           .sorted((f, s) -> -1 * Integer.compare(f.getRelevance(), s.getRelevance()))
+                           .map(s -> this.getTrackByHash(s.getLine()))
                            .nonNull()
                            .toList();
         }
@@ -57,14 +55,14 @@ public class FileSystemDataProvider implements DataProvider {
         return Collections.emptyList();
     }
 
-    public byte[] download(Track track) {
+    public InputStream download(Track track) {
         throw new UnsupportedOperationException();
     }
 
-    private Track getTrackByHash(Map.Entry<String, Integer> entry) {
+    private Track getTrackByHash(String line) {
         Track track = new Track();
 
-        String[] values = entry.getKey().split("\\|");
+        String[] values = line.split("\\|");
 
         String hash = values[0];
         String singer = values[1];
@@ -132,7 +130,7 @@ public class FileSystemDataProvider implements DataProvider {
         return -1;
     }
 
-    private Integer getRelevance(String line, String[] queryWords) {
+    private SearchResult getRelevance(String line, String[] queryWords) {
         String tempLine = Arrays.stream(line.toUpperCase().split("\\|"))
                                 .skip(1)
                                 .limit(2)
@@ -164,9 +162,16 @@ public class FileSystemDataProvider implements DataProvider {
             }
         }
         if (hasAllQueryWords) {
-            return relevance;
+            return new SearchResult(line, relevance);
         } else {
-            return 0;
+            return null;
         }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class SearchResult {
+        private String line;
+        private int relevance;
     }
 }

@@ -64,6 +64,10 @@ export class AppComponent implements OnInit, OnDestroy {
     onTrackDrag(event: CdkDragDrop<Track, Track>) {
         this.service.setTrackPosition(event.item.data, event.currentIndex);
     }
+
+    shuffle() {
+        this.service.shuffle();
+    }
 }
 
 function getId(i: number, track: Track): string {

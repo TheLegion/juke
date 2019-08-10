@@ -94,6 +94,10 @@ export class AppService {
                 destination: '/app/player/position', body: JSON.stringify({trackId: data.id, position})
             });
     }
+
+    shuffle() {
+        this.backend.publish({destination: '/app/player/shuffle'});
+    }
 }
 
 function parse<T = any>(msg): T {

@@ -7,6 +7,7 @@ import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
 import one.util.streamex.StreamEx;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +44,7 @@ public class PlayerService {
     private List<Track> playList = new ArrayList<>();
     private Track currentTrack;
     private List<DataProvider> dataProviders;
-    private ForkJoinPool downloadPool = new ForkJoinPool();
+    private ForkJoinPool downloadPool = new ForkJoinPool(1);
     private List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
     private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
     private List<Consumer<Byte>> volumeListeners = new ArrayList<>();
@@ -168,6 +169,11 @@ public class PlayerService {
         this.audioStreams.add(outputStream);
     }
 
+    public void shuffle() {
+        Collections.shuffle(playList);
+        notifyPlaylist();
+    }
+
     private void notifyPlaylist() {
         playlistListeners.forEach(listener -> listener.accept(playList));
     }
@@ -283,9 +289,10 @@ public class PlayerService {
             }
         }
 
-        private void saveTrack(Path trackPath, byte[] data) {
+        private void saveTrack(Path trackPath, InputStream stream) {
             try {
-                Files.write(trackPath, data);
+                IOUtils.copyLarge(stream, Files.newOutputStream(trackPath));
+                stream.close();
                 long duration = track.getDuration();
                 String formattedDuration = LocalTime.ofSecondOfDay(duration)
                                                     .format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -294,7 +301,6 @@ public class PlayerService {
                                 + "|" + track.getSinger().trim()
                                 + "|" + track.getTitle().trim()
                                 + "|" + formattedDuration
-                                + System.getProperty("line.separator")
                 );
                 Files.write(
                         Paths.get(cacheDir, "hashmap.txt"),

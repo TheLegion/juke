@@ -42,6 +42,9 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     volumeChange: EventEmitter<number> = new EventEmitter();
 
+    @Output()
+    shuffle: EventEmitter<void> = new EventEmitter();
+
     togglePlayIcon: string;
     audioIcon = 'headset';
     audioTitle = 'Переключиться на наушники';

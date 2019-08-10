@@ -14,6 +14,9 @@
         <button (click)="toggleAudio()" [title]="audioTitle" mat-icon-button>
             <mat-icon>{{audioIcon}}</mat-icon>
         </button>
+        <button (click)="shuffle.emit()" mat-icon-button title="Перемешать">
+            <mat-icon>shuffle</mat-icon>
+        </button>
 
         <mat-slider (valueChange)="volumeChange.emit($event)"
                     [max]="100"
