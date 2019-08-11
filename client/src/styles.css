@@ -14,3 +14,7 @@ body {
     margin: 0;
     font-family: Roboto, "Helvetica Neue", sans-serif;
 }
+
+.mat-slider-horizontal > div.mat-slider-wrapper {
+    top: 19px;
+}

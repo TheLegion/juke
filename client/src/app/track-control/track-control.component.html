@@ -1,7 +1,7 @@
 <mat-card>
     <div class="head">
+        <div [title]="track.singer">{{track.singer}}:</div>
         <div [title]="track.title">{{track.title}}</div>
-        <div [title]="track.singer">{{track.singer}}</div>
     </div>
     <div class="actions">
         <span>{{playDuration | duration}}/{{track.duration | duration}}</span>
