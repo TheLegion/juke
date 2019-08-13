@@ -18,3 +18,7 @@ body {
 .mat-slider-horizontal > div.mat-slider-wrapper {
     top: 19px;
 }
+
+.cdk-virtual-scroll-orientation-vertical .cdk-virtual-scroll-content-wrapper {
+    max-width: 100%;
+}
