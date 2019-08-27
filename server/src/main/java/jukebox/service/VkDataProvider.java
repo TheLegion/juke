@@ -26,6 +26,8 @@ import java.util.List;
 @Service
 public class VkDataProvider implements DataProvider {
 
+    private static long cookieTimeout = 4 * 60 * 60 * 1000;
+
     @Value("${vk.login}")
     private String vkLogin;
 
@@ -39,6 +41,7 @@ public class VkDataProvider implements DataProvider {
     private String downloadTimeout;
 
     private String cookie = null;
+    private long cookieUseTime = 0;
 
     private static Track getTrackByElement(Element divTrack) {
         try {
@@ -85,13 +88,16 @@ public class VkDataProvider implements DataProvider {
             return Collections.emptyList();
         }
         try {
-            if (cookie == null || cookie.isEmpty()) {
+            boolean cookieExists = cookie != null && cookie.isEmpty();
+            boolean cookieExpired = cookieUseTime - System.currentTimeMillis() > cookieTimeout;
+            if (!cookieExists || cookieExpired) {
                 cookie = authenticate(vkLogin, vkPassword);
                 if (cookie == null || cookie.isEmpty()) {
                     throw new Exception("Failed to authorize at vk.com.");
                 }
             }
 
+            cookieUseTime = System.currentTimeMillis();
             String url = "https://m.vk.com/search";
             Document doc = Jsoup.connect(url)
                                 .header("content-type", "application/x-www-form-urlencoded")
