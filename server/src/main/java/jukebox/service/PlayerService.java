@@ -54,6 +54,18 @@ public class PlayerService {
     public PlayerService(List<DataProvider> dataProviders, @Value("${cache.dir}") String cacheDir) {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
+        Port.Info source = Port.Info.SPEAKER;
+        if (AudioSystem.isLineSupported(source)) {
+            try {
+                Port outline = (Port) AudioSystem.getLine(source);
+                outline.open();
+                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
+                volumeLevel = (byte) (volumeControl.getValue() * 100.0F);
+            }
+            catch (LineUnavailableException ex) {
+                ex.printStackTrace();
+            }
+        }
         player = new ThreadPlayer(this::playNext);
         player.start();
     }
