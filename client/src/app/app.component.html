@@ -26,14 +26,13 @@
                        [playDuration]="playDuration$ | async"
                        class="current">
     </app-track-control>
-    <cdk-virtual-scroll-viewport (cdkDropListDropped)="onTrackDrag($event)"
-                                 cdkDropList
-                                 class="playlist"
-                                 itemSize="72">
-        <app-track *cdkVirtualFor="let track of playlist$ | async; trackBy: getId; templateCacheSize: 5"
+    <div (cdkDropListDropped)="onTrackDrag($event)"
+         cdkDropList
+         class="playlist">
+        <app-track *ngFor="let track of playlist$ | async; trackBy: getId"
                    [cdkDragData]="track"
                    [track]="track"
                    cdkDrag>
         </app-track>
-    </cdk-virtual-scroll-viewport>
+    </div>
 </div>

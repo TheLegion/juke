@@ -30,9 +30,10 @@ export class TrackComponent implements OnInit, OnChanges {
     @Output()
     add: EventEmitter<void> = new EventEmitter();
 
+    canAddTrack: boolean;
+
     @HostBinding('class')
     private sourceTypeClass: string;
-
 
     constructor() {
     }
@@ -49,7 +50,9 @@ export class TrackComponent implements OnInit, OnChanges {
             } else {
                 this.sourceTypeClass = null;
             }
-            this.canAdd = !this.track['__added'];
+            this.canAddTrack = this.canAdd && !this.track['__added'];
+        } else {
+            this.canAddTrack = this.canAdd;
         }
     }
 

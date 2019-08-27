@@ -4,7 +4,7 @@
         <div [title]="track.singer">{{track.singer}}</div>
     </div>
     <span>{{track.duration | duration}}</span>
-    <button (click)="addTrack()" *ngIf="canAdd" mat-icon-button title="Заказать">
+    <button (click)="addTrack()" *ngIf="canAddTrack" mat-icon-button title="Заказать">
         <mat-icon>playlist_add</mat-icon>
     </button>
 </mat-card>
