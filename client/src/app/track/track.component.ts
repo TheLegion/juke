@@ -44,9 +44,9 @@ export class TrackComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.track) {
           if (this.track) {
-            const fomrCache = this.track.source === TrackSource.Cache;
+            const fromCache = this.track.source === TrackSource.Cache;
             const isDownloading = this.track.state === TrackState.Downloading;
-            this.sourceTypeClass = fomrCache ? 'cache' : isDownloading ? 'download' : 'vk';
+            this.sourceTypeClass = fromCache ? 'cache' : isDownloading ? 'download' : 'vk';
           } else {
             this.sourceTypeClass = null;
           }
