@@ -230,9 +230,6 @@ public class PlayerService {
             logger.info("Play now: {}", track);
             currentTrack.setState(TrackState.Playing);
             notifyCurrentTrack();
-            if (Thread.currentThread() == player) {
-                player.play();
-            }
         }
         catch (IOException e) {
             e.printStackTrace();
