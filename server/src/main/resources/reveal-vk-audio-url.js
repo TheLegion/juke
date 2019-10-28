@@ -34,6 +34,10 @@ function o() {
 }
 
 function s(e) {
+    return getMp3Link(s_internal(e));
+}
+
+function s_internal(e) {
     if (!o() && ~e.indexOf('audio_api_unavailable')) {
         var t = e.split('?extra=')[1].split('#'), n = '' === t[1] ? '' : a(t[1]);
         if (t = a(t[0]), 'string' != typeof n || !t) {
@@ -72,4 +76,9 @@ function r(e, t) {
         }
     }
     return i
+}
+
+// https://habr.com/ru/post/457438/#comment_20319286
+function getMp3Link(url) {
+    return url.replace(url.split('/')[4] + '/', '').replace('/index.m3u8', '.mp3');
 }
