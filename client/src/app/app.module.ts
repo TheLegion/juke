@@ -11,8 +11,6 @@ import { DurationPipe } from './duration.pipe';
 import { TrackControlComponent } from './track-control/track-control.component';
 import { TrackComponent } from './track/track.component';
 
-import 'hammerjs';
-
 @NgModule({
             declarations: [
               AppComponent,
