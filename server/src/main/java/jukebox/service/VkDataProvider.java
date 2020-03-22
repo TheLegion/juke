@@ -12,6 +12,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -27,6 +28,7 @@ import java.util.List;
 public class VkDataProvider implements DataProvider {
 
     private static long cookieTimeout = 4 * 60 * 60 * 1000;
+    private static String userAgent = "Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1)";
 
     @Value("${vk.login}")
     private String vkLogin;
@@ -48,7 +50,7 @@ public class VkDataProvider implements DataProvider {
             Track track = new Track();
 
             Elements nodeWithUrl = divTrack.getElementsByTag("input");
-            if (nodeWithUrl.first() == null) {
+            if (nodeWithUrl.first() == null || StringUtils.isEmpty(nodeWithUrl.attr("value"))) {
                 return null;
             }
 
@@ -101,6 +103,7 @@ public class VkDataProvider implements DataProvider {
             String url = "https://m.vk.com/search";
             Document doc = Jsoup.connect(url)
                                 .header("content-type", "application/x-www-form-urlencoded")
+                                .userAgent(userAgent)
                                 .cookie("remixsid", cookie)
                                 .data("al", "1")
                                 .data("c[q]", query)
@@ -152,7 +155,6 @@ public class VkDataProvider implements DataProvider {
 
     private String authenticate(String email, String pass) throws IOException {
         String defaultURL = "https://m.vk.com";
-        String userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
         int timeout = 100000;
         Connection.Response execute = Jsoup.connect(defaultURL)
                                            .userAgent(userAgent)
