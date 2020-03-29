@@ -50,13 +50,13 @@ public class VkDataProvider implements DataProvider {
         try {
             Track track = new Track();
 
-            String sourceId = divTrack.attributes().dataset().get("id");
+            String audioData = divTrack.attributes().dataset().get("audio");
 
-            if (StringUtils.isEmpty(sourceId)) {
+            if (StringUtils.isEmpty(audioData)) {
                 return null;
             }
 
-            track.setSourceId(sourceId);
+            track.setSourceData(audioData);
             Element trackBody = divTrack.getElementsByClass("ai_body").first();
 
             track.setTitle(getFirstNodeText(trackBody, "ai_title"));
@@ -143,20 +143,7 @@ public class VkDataProvider implements DataProvider {
         try {
             String url = "https://vk.com/al_audio.php";
 
-            String audios = Jsoup.connect(url)
-                                 .header("content-type", "application/x-www-form-urlencoded")
-                                 .header("x-requested-with", "XMLHttpRequest")
-                                 .userAgent(userAgent)
-                                 .cookie("remixsid", cookie)
-                                 .data("act", "reload_audios")
-                                 .data("al", "1")
-                                 .data("audio_ids", track.getSourceId())
-                                 .ignoreContentType(true)
-                                 .method(Connection.Method.POST)
-                                 .execute()
-                                 .body();
-            Object payload = new ObjectMapper().readValue(audios, Map.class).get("payload");
-            Object dataList = getFromList(payload, 1, 0, 0);
+            Object dataList = new ObjectMapper().readValue(track.getSourceData(), List.class);
             Object ownerId = getFromList(dataList, 1);
             Object audioId = getFromList(dataList, 0);
             String[] hashes = ((String) getFromList(dataList, 13)).split("/+");

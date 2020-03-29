@@ -30,7 +30,7 @@ public class Track {
 
     private boolean isRandomlyChosen;
 
-    private String sourceId;
+    private String sourceData;
 
     @Override
     public String toString() {
