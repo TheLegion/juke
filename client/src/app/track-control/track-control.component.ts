@@ -87,6 +87,9 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
                 }
             }
         }
+        if (changes.volume) {
+            this.audioElement.nativeElement.volume = this.volume / 100;
+        }
     }
 
     ngOnDestroy(): void {
