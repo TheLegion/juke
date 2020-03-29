@@ -30,6 +30,8 @@ public class Track {
 
     private boolean isRandomlyChosen;
 
+    private String sourceId;
+
     @Override
     public String toString() {
         return String.format("%s - %s", title, singer);

@@ -11,4 +11,5 @@ export interface Track {
     source: TrackSource;
     playPosition: number;
     isRandomlyChosen: boolean;
+    sourceId: string;
 }

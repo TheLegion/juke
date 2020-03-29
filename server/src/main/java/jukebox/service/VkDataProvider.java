@@ -1,5 +1,6 @@
 package jukebox.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import one.util.streamex.StreamEx;
@@ -18,11 +19,11 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VkDataProvider implements DataProvider {
@@ -45,19 +46,22 @@ public class VkDataProvider implements DataProvider {
     private String cookie = null;
     private long cookieUseTime = 0;
 
-    private static Track getTrackByElement(Element divTrack) {
+    private static Track getTrackByAudioItem(Element divTrack) {
         try {
             Track track = new Track();
 
-            Elements nodeWithUrl = divTrack.getElementsByTag("input");
-            if (nodeWithUrl.first() == null || StringUtils.isEmpty(nodeWithUrl.attr("value"))) {
+            String sourceId = divTrack.attributes().dataset().get("id");
+
+            if (StringUtils.isEmpty(sourceId)) {
                 return null;
             }
 
-            track.setUri(new URI(nodeWithUrl.attr("value")));
-            track.setTitle(getFirstNodeText(divTrack, "ai_title"));
-            track.setSinger(getFirstNodeText(divTrack, "ai_artist"));
-            Elements durationNode = divTrack.getElementsByClass("ai_dur");
+            track.setSourceId(sourceId);
+            Element trackBody = divTrack.getElementsByClass("ai_body").first();
+
+            track.setTitle(getFirstNodeText(trackBody, "ai_title"));
+            track.setSinger(getFirstNodeText(trackBody, "ai_artist"));
+            Elements durationNode = trackBody.getElementsByClass("ai_dur");
             track.setDuration(Long.parseLong(durationNode.attr("data-dur")));
             track.setSource(TrackSource.VK);
             track.setId(track.getHash());
@@ -79,6 +83,14 @@ public class VkDataProvider implements DataProvider {
         return content.replaceAll("<em class=\"found\">", "")
                       .replaceAll("</em>", "")
                       .trim();
+    }
+
+    private static Object getFromList(Object list, int... indices) {
+        Object res = list;
+        for (int index : indices) {
+            res = ((List<?>) res).get(index);
+        }
+        return res;
     }
 
     public TrackSource getSourceType() {
@@ -113,10 +125,10 @@ public class VkDataProvider implements DataProvider {
             if (doc == null) {
                 return Collections.emptyList();
             }
-            Elements elements = doc.getElementsByClass("ai_body");
+            Elements elements = doc.getElementsByClass("audio_item");
 
             return StreamEx.of(elements)
-                           .map(VkDataProvider::getTrackByElement)
+                           .map(VkDataProvider::getTrackByAudioItem)
                            .nonNull()
                            .toList();
         }
@@ -129,7 +141,45 @@ public class VkDataProvider implements DataProvider {
 
     public InputStream download(Track track) {
         try {
-            String trackUrl = track.getUri().toString();
+            String url = "https://vk.com/al_audio.php";
+
+            String audios = Jsoup.connect(url)
+                                 .header("content-type", "application/x-www-form-urlencoded")
+                                 .header("x-requested-with", "XMLHttpRequest")
+                                 .userAgent(userAgent)
+                                 .cookie("remixsid", cookie)
+                                 .data("act", "reload_audios")
+                                 .data("al", "1")
+                                 .data("audio_ids", track.getSourceId())
+                                 .ignoreContentType(true)
+                                 .method(Connection.Method.POST)
+                                 .execute()
+                                 .body();
+            Object payload = new ObjectMapper().readValue(audios, Map.class).get("payload");
+            Object dataList = getFromList(payload, 1, 0, 0);
+            Object ownerId = getFromList(dataList, 1);
+            Object audioId = getFromList(dataList, 0);
+            String[] hashes = ((String) getFromList(dataList, 13)).split("/+");
+            String actionHash = hashes[1];
+            String urlHash = hashes[2];
+
+            String fullId = StreamEx.of(ownerId, audioId, actionHash, urlHash).joining("_");
+
+            String audioWithUrl = Jsoup.connect(url)
+                                       .header("content-type", "application/x-www-form-urlencoded")
+                                       .header("x-requested-with", "XMLHttpRequest")
+                                       .userAgent(userAgent)
+                                       .cookie("remixsid", cookie)
+                                       .data("act", "reload_audio")
+                                       .data("al", "1")
+                                       .data("ids", fullId)
+                                       .ignoreContentType(true)
+                                       .method(Connection.Method.POST)
+                                       .execute()
+                                       .body();
+
+            Object payloadWithUrl = new ObjectMapper().readValue(audioWithUrl, Map.class).get("payload");
+            String trackUrl = (String) getFromList(payloadWithUrl, 1, 0, 0, 2);
             ScriptEngineManager manager = new ScriptEngineManager();
             ScriptEngine engine = manager.getEngineByName("javascript");
             String decodedTrackUrl = engine.eval(getRevealScript() + "s('" + trackUrl + "')").toString();
