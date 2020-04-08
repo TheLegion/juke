@@ -106,6 +106,12 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
+    onEnded(): void {
+        const audioElement = this.audioElement.nativeElement;
+        audioElement.load();
+        audioElement.play();
+    }
+
     setupAudioButton() {
         const audioElement = this.audioElement.nativeElement;
         if (audioElement.paused || audioElement.ended) {
