@@ -26,8 +26,8 @@
         </mat-slider>
     </div>
     <audio #audio
+           (error)="onError()"
            (ended)="onEnded()"
-           (error)="setupAudioButton()"
            (pause)="setupAudioButton()"
            (play)="setupAudioButton()"
            preload="none"

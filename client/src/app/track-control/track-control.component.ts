@@ -122,4 +122,8 @@ export class TrackControlComponent implements OnInit, OnChanges, OnDestroy {
             this.audioTitle = 'Отключить наушники';
         }
     }
+
+    onError() {
+        setTimeout(() => this.onEnded(), 1000);
+    }
 }
