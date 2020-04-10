@@ -10,7 +10,6 @@ import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -98,8 +97,9 @@ public class ZaycevDataProvider implements DataProvider {
                                .body();
             String location = (String) new ObjectMapper().readValue(body, Map.class).get("url");
             URLConnection connection = new URL(location).openConnection();
-            BufferedInputStream bis = new BufferedInputStream(connection.getInputStream());
-            return bis;
+            connection.setConnectTimeout(timeout);
+            connection.setReadTimeout(timeout);
+            return connection.getInputStream();
         }
         catch (IOException e) {
             throw new RuntimeException(e);
