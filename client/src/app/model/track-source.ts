@@ -1,4 +1,5 @@
 export const enum TrackSource {
     VK = 'VK',
-    Cache = 'Cache'
+    Cache = 'Cache',
+    Zaycev = 'Zaycev'
 }

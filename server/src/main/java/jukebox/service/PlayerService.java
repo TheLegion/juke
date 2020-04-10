@@ -295,12 +295,13 @@ public class PlayerService {
             catch (Exception e) {
                 track.setState(TrackState.Failed);
                 e.printStackTrace();
+                notifyPlaylist();
             }
         }
 
         private void saveTrack(Path trackPath, InputStream stream) {
-            try {
-                IOUtils.copyLarge(stream, Files.newOutputStream(trackPath));
+            try (OutputStream trackOutputStream = Files.newOutputStream(trackPath)) {
+                IOUtils.copyLarge(stream, trackOutputStream);
                 stream.close();
                 long duration = track.getDuration();
                 String formattedDuration = LocalTime.ofSecondOfDay(duration)

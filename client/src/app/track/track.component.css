@@ -3,7 +3,11 @@
 }
 
 :host.vk > mat-card {
-    background: lightblue;
+    background: #4a76a8;
+}
+
+:host.zaycev > mat-card {
+    background: #00aadc;
 }
 
 :host.download > mat-card {

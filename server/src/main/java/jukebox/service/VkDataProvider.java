@@ -29,7 +29,6 @@ import java.util.Map;
 public class VkDataProvider implements DataProvider {
 
     private static long cookieTimeout = 4 * 60 * 60 * 1000;
-    private static String userAgent = "Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1)";
 
     @Value("${vk.login}")
     private String vkLogin;
