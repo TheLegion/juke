@@ -6,65 +6,77 @@ import jukebox.entities.PlayerState;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
+import jukebox.service.providers.DataProvider;
 import one.util.streamex.StreamEx;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.ServletOutputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.FloatControl;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Port;
+import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {
 
+    public final String cacheDir;
+    public final List<DataProvider> dataProviders;
+    public final List<OutputStream> audioStreams = new ArrayList<>();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ThreadPlayer player;
-    private String cacheDir;
-    private byte volumeLevel = 100;
-    private List<Track> playList = new ArrayList<>();
-    private Track currentTrack;
-    private List<DataProvider> dataProviders;
-    private ForkJoinPool downloadPool = new ForkJoinPool(1);
-    private List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
-    private List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
-    private List<Consumer<Byte>> volumeListeners = new ArrayList<>();
-    private Set<String> votedToSkip = new ConcurrentSkipListSet<>();
-    private List<OutputStream> audioStreams = new ArrayList<>();
+    private final List<Track> playList = new ArrayList<>();
+    private final ForkJoinPool downloadPool = new ForkJoinPool(1);
+    private final List<Consumer<List<Track>>> playlistListeners = new ArrayList<>();
+    private final List<Consumer<Track>> currentTrackListeners = new ArrayList<>();
+    private final List<Consumer<Byte>> volumeListeners = new ArrayList<>();
+    private final Set<String> votedToSkip = new ConcurrentSkipListSet<>();
+    private final Line outline;
 
-    public PlayerService(List<DataProvider> dataProviders, @Value("${cache.dir}") String cacheDir) {
+    private byte volumeLevel = 100;
+    private Track currentTrack;
+
+    public PlayerService(
+            List<DataProvider> dataProviders,
+            @Value("${audio.name}") String audioName,
+            @Value("${cache.dir}") String cacheDir
+    ) {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
-        Port.Info source = Port.Info.SPEAKER;
-        if (AudioSystem.isLineSupported(source)) {
-            try {
-                Port outline = (Port) AudioSystem.getLine(source);
-                outline.open();
-                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
-                volumeLevel = (byte) (volumeControl.getValue() * 100.0F);
-            }
-            catch (LineUnavailableException ex) {
-                ex.printStackTrace();
-            }
+        printMixersToConsole();
+        Mixer.Info mixerInfo = Arrays.stream(AudioSystem.getMixerInfo())
+                                     .filter(mixer -> getMixerName(mixer).equals(audioName))
+                                     .findFirst()
+                                     .orElse(null);
+        Mixer mixer = AudioSystem.getMixer(mixerInfo);
+        try {
+            outline = mixer.getLine(mixer.getSourceLineInfo()[0]);
+        }
+        catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            outline.open();
+            FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.MASTER_GAIN);
+            volumeLevel = (byte) dbToVolume(
+                    volumeControl.getValue(),
+                    volumeControl.getMinimum(),
+                    volumeControl.getMaximum()
+            );
+        }
+        catch (LineUnavailableException ex) {
+            ex.printStackTrace();
         }
         player = new ThreadPlayer(this::playNext);
         player.start();
@@ -84,7 +96,7 @@ public class PlayerService {
 
     public void add(Track track) {
         this.playList.add(track);
-        downloadPool.execute(new DownloadTask(track));
+        downloadPool.execute(new DownloadTask(this, track));
     }
 
     public PlayerState getState() {
@@ -116,17 +128,7 @@ public class PlayerService {
 
                 case 2:
                 case 3:
-                case 4:
                     votesText = "голоса";
-                    break;
-
-                case 5:
-                case 6:
-                case 7:
-                case 8:
-                case 9:
-                case 0:
-                    votesText = "голосов";
                     break;
             }
             return "Нужно ещё " + needVotesToSkip + " " + votesText + ". Агитируй!";
@@ -152,19 +154,9 @@ public class PlayerService {
             volume = 100;
         }
         volumeLevel = volume;
-        Port.Info source = Port.Info.SPEAKER;
 
-        if (AudioSystem.isLineSupported(source)) {
-            try {
-                Port outline = (Port) AudioSystem.getLine(source);
-                outline.open();
-                FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.VOLUME);
-                volumeControl.setValue(volume / 100.0F);
-            }
-            catch (LineUnavailableException ex) {
-                ex.printStackTrace();
-            }
-        }
+        FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.MASTER_GAIN);
+        volumeControl.setValue(volumeToDb(volume, volumeControl.getMinimum(), volumeControl.getMaximum()));
         notifyVolume();
     }
 
@@ -186,7 +178,7 @@ public class PlayerService {
         notifyPlaylist();
     }
 
-    private void notifyPlaylist() {
+    public void notifyPlaylist() {
         playlistListeners.forEach(listener -> listener.accept(playList));
     }
 
@@ -209,7 +201,7 @@ public class PlayerService {
 
         List<Track> tracksToRemove = playList.stream().filter(x -> x.getState() == TrackState.Failed)
                                              .collect(Collectors.toList());
-        if (tracksToRemove.size() > 0) {
+        if (!tracksToRemove.isEmpty()) {
             playList.removeAll(tracksToRemove);
             notifyPlaylist();
         }
@@ -225,8 +217,8 @@ public class PlayerService {
             currentTrack = track;
             Path path = Paths.get(cacheDir, track.getId() + ".mp3");
             InputStream originalInputStream = Files.newInputStream(path);
-            InputStream stream = new WrappedInputStream(originalInputStream);
-            player.setFile(stream);
+            InputStream stream = new WrappedInputStream(this, originalInputStream);
+            player.setFile(stream, outline);
             logger.info("Play now: {}", track);
             currentTrack.setState(TrackState.Playing);
             notifyCurrentTrack();
@@ -267,130 +259,27 @@ public class PlayerService {
         notifyCurrentTrack();
     }
 
-    private class DownloadTask extends RecursiveAction {
+    private void printMixersToConsole() {
+        Arrays.stream(AudioSystem.getMixerInfo()).forEach(mixer -> System.out.println(getMixerName(mixer)));
+    }
 
-        private Track track;
-
-        DownloadTask(Track track) {
-            this.track = track;
+    private String getMixerName(Mixer.Info mixerInfo) {
+        try {
+            return new String(mixerInfo.getName().getBytes("Windows-1252"), "Windows-1251");
         }
-
-        @Override
-        protected void compute() {
-            Path trackPath = Paths.get(cacheDir, track.getId() + ".mp3");
-
-            try {
-                if (!Files.exists(trackPath)) {
-                    track.setState(TrackState.Downloading);
-                    notifyPlaylist();
-                    StreamEx.of(dataProviders)
-                            .findFirst(provider -> provider.getSourceType() == track.getSource())
-                            .map(provider -> provider.download(track))
-                            .ifPresent(data -> saveTrack(trackPath, data));
-                }
-                track.setState(TrackState.Ready);
-                track.setSource(TrackSource.Cache);
-                notifyPlaylist();
-            }
-            catch (Exception e) {
-                track.setState(TrackState.Failed);
-                e.printStackTrace();
-                notifyPlaylist();
-            }
-        }
-
-        private void saveTrack(Path trackPath, InputStream stream) {
-            try (OutputStream trackOutputStream = Files.newOutputStream(trackPath)) {
-                IOUtils.copyLarge(stream, trackOutputStream);
-                stream.close();
-                long duration = track.getDuration();
-                String formattedDuration = LocalTime.ofSecondOfDay(duration)
-                                                    .format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-                List<String> str = Collections.singletonList(
-                        track.getId()
-                                + "|" + track.getSinger().trim()
-                                + "|" + track.getTitle().trim()
-                                + "|" + formattedDuration
-                );
-                Files.write(
-                        Paths.get(cacheDir, "hashmap.txt"),
-                        str,
-                        StandardOpenOption.APPEND,
-                        StandardOpenOption.CREATE
-                );
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private class WrappedInputStream extends InputStream {
-        InputStream innerStream;
-
-        WrappedInputStream(InputStream innerStream) {
-            this.innerStream = innerStream;
-        }
-
-        @Override
-        public int read() throws IOException {
-            return innerStream.read();
-        }
-
-        @Override
-        public String toString() {
-            return innerStream.toString();
-        }
-
-        @Override
-        public synchronized void reset() throws IOException {
-            innerStream.reset();
-        }
-
-        @Override
-        public void close() throws IOException {
-            innerStream.close();
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
-            return innerStream.skip(n);
-        }
-
-        @Override
-        public int available() throws IOException {
-            return innerStream.available();
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int read = innerStream.read(b, off, len);
-            ListIterator<OutputStream> iterator = audioStreams.listIterator();
-            while (iterator.hasNext()) {
-                OutputStream stream = iterator.next();
-                try {
-                    stream.write(b);
-                }
-                catch (IOException e) {
-                    iterator.remove();
-                }
-            }
-            return read;
-        }
-
-        @Override
-        public int read(byte[] b) throws IOException {
-            return innerStream.read(b);
-        }
-
-        @Override
-        public synchronized void mark(int readlimit) {
-            innerStream.mark(readlimit);
-        }
-
-        @Override
-        public boolean markSupported() {
-            return innerStream.markSupported();
-        }
+    private float volumeToDb(float volume, float min, float max) {
+        float length = max - min;
+        return (float) (min + (Math.log(volume) / Math.log(100.0F) * length));
     }
+
+    private float dbToVolume(float db, float min, float max) {
+        float length = max - min;
+        return (float) Math.exp((db - min) / length * Math.log(100.0F));
+    }
+
 }

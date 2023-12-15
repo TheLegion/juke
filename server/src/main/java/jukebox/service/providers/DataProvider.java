@@ -1,4 +1,4 @@
-package jukebox.service;
+package jukebox.service.providers;
 
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;

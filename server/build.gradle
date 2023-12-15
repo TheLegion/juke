@@ -1,19 +1,14 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath('org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE')
-    }
+plugins {
+    id "org.springframework.boot" version "2.7.18"
 }
 
 apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 bootJar {
     baseName = 'jukebox'
     version = '0.1.0'
+    mainClass = 'jukebox.Application'
 }
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

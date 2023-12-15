@@ -3,6 +3,7 @@ package jukebox.service;
 import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
+import jukebox.service.providers.DataProvider;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import one.util.streamex.StreamEx;
@@ -94,7 +95,7 @@ public class FileSystemDataProvider implements DataProvider {
         }
         int startPos = indexOfWord + word.length();
 
-        if (word.equals("")) {
+        if (word.isEmpty()) {
             return 0;
         }
 

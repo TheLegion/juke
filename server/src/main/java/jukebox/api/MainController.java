@@ -2,7 +2,7 @@ package jukebox.api;
 
 import jukebox.entities.PlayerState;
 import jukebox.entities.Track;
-import jukebox.service.DataProvider;
+import jukebox.service.providers.DataProvider;
 import jukebox.service.PlayerService;
 import one.util.streamex.StreamEx;
 import org.springframework.messaging.handler.annotation.Header;

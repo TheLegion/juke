@@ -1,4 +1,4 @@
-package jukebox.service;
+package jukebox.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jukebox.entities.Track;

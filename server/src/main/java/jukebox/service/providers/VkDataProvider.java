@@ -1,4 +1,4 @@
-package jukebox.service;
+package jukebox.service.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jukebox.entities.Track;
@@ -28,7 +28,7 @@ import java.util.Map;
 @Service
 public class VkDataProvider implements DataProvider {
 
-    private static long cookieTimeout = 4 * 60 * 60 * 1000;
+    private static final long cookieTimeout = 4 * 60 * 60 * 1000;
 
     @Value("${vk.login}")
     private String vkLogin;
@@ -176,8 +176,8 @@ public class VkDataProvider implements DataProvider {
         }
         catch (Exception e) {
             System.out.println("VKComDataProvider error: " + e.getMessage());
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     private String getRevealScript() {

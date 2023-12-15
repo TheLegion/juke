@@ -3,12 +3,13 @@ package jukebox.core;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
+import javax.sound.sampled.Line;
 import java.io.InputStream;
 
 public class ThreadPlayer extends Thread {
 
     private AdvancedPlayer player;
-    private Runnable onFinish;
+    private final Runnable onFinish;
     private long startedOnDate;
     private long startedOnDuration = 0;
 
@@ -40,9 +41,9 @@ public class ThreadPlayer extends Thread {
         }
     }
 
-    public void setFile(InputStream stream) {
+    public void setFile(InputStream stream, Line outline) {
         try {
-            player = new AdvancedPlayer(stream);
+            player = new AdvancedPlayer(stream, new AudioDevice(outline));
             startedOnDuration = 0;
         }
         catch (JavaLayerException e) {
