@@ -97,7 +97,7 @@ public class VkDataProvider implements DataProvider {
     }
 
     public List<Track> search(String query) {
-        if (query == null || query.isEmpty()) {
+        if (true || query == null || query.isEmpty()) {
             return Collections.emptyList();
         }
         try {

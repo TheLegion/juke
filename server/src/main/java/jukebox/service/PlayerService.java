@@ -18,7 +18,6 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,7 +25,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {
@@ -56,7 +54,7 @@ public class PlayerService {
         this.cacheDir = cacheDir;
         printMixersToConsole();
         Mixer.Info mixerInfo = Arrays.stream(AudioSystem.getMixerInfo())
-                                     .filter(mixer -> getMixerName(mixer).equals(audioName))
+                                     .filter(mixer -> mixer.getName().equals(audioName))
                                      .findFirst()
                                      .orElse(null);
         Mixer mixer = AudioSystem.getMixer(mixerInfo);
@@ -199,8 +197,7 @@ public class PlayerService {
             track = chooseRandom();
         }
 
-        List<Track> tracksToRemove = playList.stream().filter(x -> x.getState() == TrackState.Failed)
-                                             .collect(Collectors.toList());
+        List<Track> tracksToRemove = playList.stream().filter(x -> x.getState() == TrackState.Failed).toList();
         if (!tracksToRemove.isEmpty()) {
             playList.removeAll(tracksToRemove);
             notifyPlaylist();
@@ -260,16 +257,7 @@ public class PlayerService {
     }
 
     private void printMixersToConsole() {
-        Arrays.stream(AudioSystem.getMixerInfo()).forEach(mixer -> System.out.println(getMixerName(mixer)));
-    }
-
-    private String getMixerName(Mixer.Info mixerInfo) {
-        try {
-            return new String(mixerInfo.getName().getBytes("Windows-1252"), "Windows-1251");
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        Arrays.stream(AudioSystem.getMixerInfo()).forEach(mixer -> System.out.println(mixer.getName()));
     }
 
     private float volumeToDb(float volume, float min, float max) {
