@@ -1,7 +1,7 @@
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {ScrollingModule} from '@angular/cdk/scrolling';
 import {NgModule} from '@angular/core';
-import {BrowserModule, HammerModule} from '@angular/platform-browser';
+import { BrowserModule } from '@angular/platform-browser';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {InjectableRxStompConfig, RxStompService, rxStompServiceFactory} from '@stomp/ng2-stompjs';
 
@@ -32,7 +32,6 @@ import {MatCardModule} from '@angular/material/card';
               MatInputModule,
               DragDropModule,
               ScrollingModule,
-              HammerModule,
             ],
             providers: [
               {
