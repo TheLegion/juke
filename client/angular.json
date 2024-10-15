@@ -87,7 +87,6 @@
       }
     }
   },
-  "defaultProject": "client",
   "schematics": {
     "@schematics/angular:component": {
       "changeDetection": "OnPush"
