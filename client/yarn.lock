@@ -1497,26 +1497,18 @@
     semver "7.3.4"
     semver-intersect "1.4.0"
 
-"@stomp/ng2-stompjs@7.2.0":
-  version "7.2.0"
-  resolved "https://registry.yarnpkg.com/@stomp/ng2-stompjs/-/ng2-stompjs-7.2.0.tgz#2107b7e3d416dc0c69cce2d39f45e1f17261d7fb"
-  integrity sha512-sQO1a7stOIRlj1DO8W2Gix7bUYiw8eU1OzKBLVN+hOTjjYQt93H3ph9ifHvRQlBLMPR/RZnQ3LgUxJVcrhwodQ==
+"@stomp/rx-stomp@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@stomp/rx-stomp/-/rx-stomp-1.2.0.tgz#2cd7263e467428e0f4e1332dff93f37fb87cc297"
+  integrity sha512-QLzPe3q0EwLB+cVWdUFEO4z5tyR+kPnXJANKN2UvB7Spz/oViHF959cydmXdQWaK7NHp86VO54TgFfXbHVnSLg==
   dependencies:
-    "@stomp/rx-stomp" "^0.3.0 >=0.3.0"
-    tslib "^1.9.0"
-
-"@stomp/rx-stomp@^0.3.0 >=0.3.0":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@stomp/rx-stomp/-/rx-stomp-0.3.2.tgz#a6de3d0eb0e5cc24db0ea8d4276bee2cb8420ced"
-  integrity sha512-9q0Peyb4s0IhWv3kMrNrHvt7Pvffg/+hWBYOC7C+aQhxjuCkA50j3ycJSx6jdrpdJTDdSRT8/aQ9GXb3qfycwg==
-  dependencies:
-    "@stomp/stompjs" "^5.1.0 >=5.4.2"
+    "@stomp/stompjs" "^6.0.0 >=6.1.1"
     angular2-uuid "^1.1.1"
 
-"@stomp/stompjs@^5.1.0 >=5.4.2":
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/@stomp/stompjs/-/stompjs-5.4.2.tgz#9e07b44d834f37ae1588044736236354a38a10cb"
-  integrity sha512-4JDCnrlzoLHINIEylBTPA6kXMfMEW0IbWU+fkE55R28exV13HT+HT8xWReFRfPZbMsDvaKZzIjvstl3EoIQQuw==
+"@stomp/stompjs@^6.0.0 >=6.1.1":
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/@stomp/stompjs/-/stompjs-6.1.2.tgz#4ac3c380e8d1de1da94a3623d404e67de69dd01e"
+  integrity sha512-FHDTrIFM5Ospi4L3Xhj6v2+NzCVAeNDcBe95YjUWhWiRMrBF6uN3I7AUOlRgT6jU/2WQvvYK8ZaIxFfxFp+uHQ==
 
 "@tootallnate/once@1":
   version "1.1.2"
@@ -1881,7 +1873,7 @@ ajv@^6.12.0:
 angular2-uuid@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/angular2-uuid/-/angular2-uuid-1.1.1.tgz#72f03cd532b7f40032eb1ecfb9f8457384be956e"
-  integrity sha1-cvA81TK39AAy6x7PufhFc4S+lW4=
+  integrity sha512-6AXPyii9q8KBFGagybLNVmdGJLPcVZAhmv3odNGSJIA18LuJ3xOe6uN9GvjlQsGfdmYeuxlsGnFEUu7gPhkc+g==
 
 ansi-colors@4.1.1:
   version "4.1.1"

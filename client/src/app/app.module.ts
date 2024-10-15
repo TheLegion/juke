@@ -1,19 +1,18 @@
-import {DragDropModule} from '@angular/cdk/drag-drop';
-import {ScrollingModule} from '@angular/cdk/scrolling';
-import {NgModule} from '@angular/core';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { NgModule } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSliderModule } from '@angular/material/slider';
 import { BrowserModule } from '@angular/platform-browser';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {InjectableRxStompConfig, RxStompService, rxStompServiceFactory} from '@stomp/ng2-stompjs';
-
-import {AppComponent} from './app.component';
-import {DurationPipe} from './duration.pipe';
-import {TrackControlComponent} from './track-control/track-control.component';
-import {TrackComponent} from './track/track.component';
-import {MatInputModule} from '@angular/material/input';
-import {MatIconModule} from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-import {MatSliderModule} from '@angular/material/slider';
-import {MatCardModule} from '@angular/material/card';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { RxStomp, RxStompConfig } from '@stomp/rx-stomp';
+import { AppComponent } from './app.component';
+import { DurationPipe } from './duration.pipe';
+import { TrackControlComponent } from './track-control/track-control.component';
+import { TrackComponent } from './track/track.component';
 
 @NgModule({
             declarations: [
@@ -35,17 +34,24 @@ import {MatCardModule} from '@angular/material/card';
             ],
             providers: [
               {
-                provide: InjectableRxStompConfig,
-                useFactory: () => ({
-                  brokerURL: `ws://${location.host}/api`,
-                  reconnectDelay: 500,
-                  debug: () => void 0,
-                } as InjectableRxStompConfig),
+                provide: RxStompConfig,
+                useFactory: () => {
+                  const config = new RxStompConfig();
+                  config.brokerURL = `ws://${location.host}/api`;
+                  config.reconnectDelay = 500;
+
+                  return config;
+                },
               },
               {
-                provide: RxStompService,
-                useFactory: rxStompServiceFactory,
-                deps: [InjectableRxStompConfig],
+                provide: RxStomp,
+                useFactory: (config: RxStompConfig) => {
+                  const rxStomp = new RxStomp();
+                  rxStomp.configure(config);
+                  rxStomp.activate();
+                  return rxStomp;
+                },
+                deps: [RxStompConfig],
               },
             ],
             bootstrap: [AppComponent],
