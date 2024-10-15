@@ -1,43 +1,9 @@
-:host {
-    display: block;
-}
-
-mat-card {
-    display: flex;
-    padding: 8px;
-    flex-direction: column;
-}
-
-.head {
-    flex: 1 1;
-    min-width: 0;
-    display: flex;
-    font-size: 16px;
-    margin-bottom: 0;
-}
-
-.head > div {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.head > div:first-child {
-    padding-right: 8px;
-}
-
-.actions {
-    padding: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-}
-
-mat-slider {
-    padding: 0 8px;
-    height: 40px;
-}
-
 audio {
     display: none;
+}
+
+.duration-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 10px;
 }

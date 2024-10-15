@@ -1,36 +1,46 @@
-<mat-card>
-    <div class="head">
-        <div [title]="track.singer">{{track.singer}}:</div>
-        <div [title]="track.title">{{track.title}}</div>
-    </div>
-    <div class="actions">
-        <span>{{playDuration | duration}}/{{track.duration | duration}}</span>
-        <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
-            <mat-icon>{{togglePlayIcon}}</mat-icon>
-        </button>
-        <button (click)="skip.emit()" mat-icon-button title="Скипануть">
-            <mat-icon>fast_forward</mat-icon>
-        </button>
-        <button (click)="toggleAudio()" [title]="audioTitle" mat-icon-button>
-            <mat-icon>{{audioIcon}}</mat-icon>
-        </button>
-        <button (click)="shuffle.emit()" mat-icon-button title="Перемешать">
-            <mat-icon>shuffle</mat-icon>
-        </button>
+<mat-card appearance="raised">
+  <mat-card-header>
+    <mat-card-title [title]="track.title">{{ track.title }}</mat-card-title>
+    <mat-card-subtitle [title]="track.singer">{{ track.singer }}</mat-card-subtitle>
+  </mat-card-header>
 
-        <mat-slider (valueChange)="volumeChange.emit($event)"
-                    [max]="100"
-                    [min]="20"
-                    [thumbLabel]="true"
-                    [value]="volume">
-        </mat-slider>
+  <mat-card-actions>
+    <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
+      <mat-icon>{{ togglePlayIcon }}</mat-icon>
+    </button>
+
+    <button (click)="skip.emit()" mat-icon-button matTooltip="Скипануть">
+      <mat-icon>fast_forward</mat-icon>
+    </button>
+
+    <button (click)="toggleAudio()" [title]="audioTitle" mat-icon-button>
+      <mat-icon>{{ audioIcon }}</mat-icon>
+    </button>
+
+    <button (click)="shuffle.emit()" mat-icon-button matTooltip="Перемешать">
+      <mat-icon>shuffle</mat-icon>
+    </button>
+
+    <mat-slider [max]="100" [min]="20" discrete="true">
+      <input matSliderThumb [value]="volume" (valueChange)="volumeChange.emit($event)"/>
+    </mat-slider>
+  </mat-card-actions>
+
+  <mat-card-footer>
+    <div class="duration-info">
+      <span>{{ playDuration | duration }}</span>
+      <span>{{ track.duration | duration }}</span>
     </div>
-    <audio #audio
-           (error)="onError()"
-           (ended)="onEnded()"
-           (pause)="setupAudioButton()"
-           (play)="setupAudioButton()"
-           preload="none"
-           src="/audio/stream">
-    </audio>
+    <mat-progress-bar mode="determinate"
+                      [value]="track.duration / 100 * playDuration"></mat-progress-bar>
+  </mat-card-footer>
+
+  <audio #audio
+         (error)="onError()"
+         (ended)="onEnded()"
+         (pause)="setupAudioButton()"
+         (play)="setupAudioButton()"
+         preload="none"
+         src="/audio/stream">
+  </audio>
 </mat-card>
