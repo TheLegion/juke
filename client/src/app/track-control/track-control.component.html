@@ -32,7 +32,7 @@
       <span>{{ track.duration | duration }}</span>
     </div>
     <mat-progress-bar mode="determinate"
-                      [value]="track.duration / 100 * playDuration"></mat-progress-bar>
+                      [value]="playDuration / track.duration * 100"></mat-progress-bar>
   </mat-card-footer>
 
   <audio #audio
