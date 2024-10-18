@@ -1,33 +1,32 @@
 plugins {
+    id "java"
     id "org.springframework.boot" version "2.7.18"
 }
 
-apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
 
 bootJar {
-    baseName = 'jukebox'
-    version = '0.1.0'
-    mainClass = 'jukebox.Application'
+    archiveBaseName = 'jukebox'
 }
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile 'org.springframework.boot:spring-boot-starter-websocket'
-    compile 'org.springframework.boot:spring-boot-starter-undertow'
-    compile 'commons-codec:commons-codec:1.9'
-    compile 'commons-io:commons-io:2.6'
-    compile 'one.util:streamex:0.6.8'
-    compile 'org.jsoup:jsoup:1.12.1'
-    compile group: 'javazoom', name: 'jlayer', version: '1.0.1'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-undertow'
+    implementation 'commons-codec:commons-codec:1.9'
+    implementation 'commons-io:commons-io:2.6'
+    implementation 'one.util:streamex:0.6.8'
+    implementation 'org.jsoup:jsoup:1.12.1'
+    implementation group: 'javazoom', name: 'jlayer', version: '1.0.1'
 
-    compileOnly 'org.projectlombok:lombok:1.18.8'
-    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 }
 
 configurations {
