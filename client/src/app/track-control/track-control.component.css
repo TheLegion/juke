@@ -1,9 +1,17 @@
 audio {
-    display: none;
+  display: none;
 }
 
 .duration-info {
-    display: flex;
-    justify-content: space-between;
-    margin: 0 10px;
+  display: flex;
+  margin: 0 10px;
+}
+
+.mat-mdc-card {
+  padding: 4px 8px;
+}
+
+.mat-mdc-card-header,
+.mat-mdc-card-actions {
+  padding: 0;
 }

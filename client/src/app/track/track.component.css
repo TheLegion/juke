@@ -17,7 +17,7 @@
 .mat-mdc-card {
     display: flex;
     flex-flow: row nowrap;
-    padding: 5px 16px;
+    padding: 4px 8px;
 }
 
 .mat-mdc-card-header {
@@ -33,7 +33,12 @@
     font-size: 14px;
 }
 
+.mat-mdc-card-actions {
+    padding: 0;
+}
+
 .mat-mdc-card-footer {
     display: flex;
     align-items: center;
+    margin-right: 5px;
 }

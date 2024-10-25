@@ -1,10 +1,16 @@
 <mat-card appearance="raised">
   <mat-card-header>
-    <mat-card-title [title]="track.title">{{ track.title }}</mat-card-title>
-    <mat-card-subtitle [title]="track.singer">{{ track.singer }}</mat-card-subtitle>
+    <mat-card-title [matTooltip]="track.title">{{ track.title }}</mat-card-title>
+    <mat-card-subtitle [matTooltip]="track.singer">{{ track.singer }}</mat-card-subtitle>
   </mat-card-header>
 
   <mat-card-actions>
+    <div class="duration-info">
+      <span>{{ playDuration | duration }}</span>
+      <span> / </span>
+      <span>{{ track.duration | duration }}</span>
+    </div>
+
     <button (click)="togglePlay.emit()" *ngIf="togglePlayIcon" mat-icon-button>
       <mat-icon>{{ togglePlayIcon }}</mat-icon>
     </button>
@@ -13,7 +19,7 @@
       <mat-icon>fast_forward</mat-icon>
     </button>
 
-    <button (click)="toggleAudio()" [title]="audioTitle" mat-icon-button>
+    <button (click)="toggleAudio()" [matTooltip]="audioTitle" mat-icon-button>
       <mat-icon>{{ audioIcon }}</mat-icon>
     </button>
 
@@ -25,15 +31,6 @@
       <input matSliderThumb [value]="volume" (valueChange)="volumeChange.emit($event)"/>
     </mat-slider>
   </mat-card-actions>
-
-  <mat-card-footer>
-    <div class="duration-info">
-      <span>{{ playDuration | duration }}</span>
-      <span>{{ track.duration | duration }}</span>
-    </div>
-    <mat-progress-bar mode="determinate"
-                      [value]="playDuration / track.duration * 100"></mat-progress-bar>
-  </mat-card-footer>
 
   <audio #audio
          (error)="onError()"
