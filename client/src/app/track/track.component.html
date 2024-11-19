@@ -1,10 +1,16 @@
-<mat-card class="mat-primary">
-    <div class="track-head">
-        <div [title]="track.title">{{track.title}}</div>
-        <div [title]="track.singer">{{track.singer}}</div>
-    </div>
-    <span>{{track.duration | duration}}</span>
-    <button (click)="addTrack()" *ngIf="canAddTrack" mat-icon-button title="Заказать">
-        <mat-icon>playlist_add</mat-icon>
+<mat-card appearance="raised">
+  <mat-card-header>
+    <mat-card-title [matTooltip]="track.title">{{ track.title }}</mat-card-title>
+    <mat-card-subtitle [matTooltip]="track.singer">{{ track.singer }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-footer>
+    <span>{{ track.duration | duration }}</span>
+  </mat-card-footer>
+
+  <mat-card-actions *ngIf="canAddTrack">
+    <button (click)="addTrack()" mat-icon-button matTooltip="Заказать">
+      <mat-icon>playlist_add</mat-icon>
     </button>
+  </mat-card-actions>
 </mat-card>

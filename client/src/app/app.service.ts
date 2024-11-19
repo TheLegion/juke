@@ -1,12 +1,12 @@
 import {Injectable} from '@angular/core';
+import { RxStomp } from '@stomp/rx-stomp';
 import {merge, Observable, Subject} from 'rxjs';
-import {RxStompService} from '@stomp/ng2-stompjs';
 import {Track} from './model/track.model';
 import {map, shareReplay, switchMap} from 'rxjs/operators';
 import {PlayerState} from './model/player-state.model';
 
 @Injectable({
-    providedIn: 'root'
+    providedIn: 'root',
 })
 export class AppService {
 
@@ -19,7 +19,7 @@ export class AppService {
     private readonly messages$: Observable<string>;
     private readonly playDuration$: Observable<number>;
 
-    constructor(private backend: RxStompService) {
+    constructor(private backend: RxStomp) {
         const fullInfo: Observable<PlayerState> = this.backend.watch('/app/player/state').pipe(map(parse), shareReplay(1));
         this.searchResults$ = this.searchQuery$.pipe(
             switchMap(query => this.backend.watch('/app/search', {query})),

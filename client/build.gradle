@@ -1,25 +1,27 @@
 plugins {
-    id "com.github.node-gradle.node" version "3.5.1"
+    id 'base'
+    id "com.github.node-gradle.node" version "7.1.0"
 }
-apply plugin: 'base'
 
-task i(type: YarnTask) {
+node {
+    version = '18.20.4'
+    yarnVersion = '1.22.22'
+    download = true
+}
+
+build {
+    dependsOn ":nodeBuild"
+}
+
+tasks.register("i", YarnTask) {
     args = ['install', '--frozen-lockfile', '--check-files']
 }
 
-task updateLock(type: YarnTask) {
+tasks.register("updateLock", YarnTask) {
     args = ['install']
 }
 
-task nodeBuild(type: NpmTask) {
+tasks.register("nodeBuild", NpmTask) {
     args = ['run', 'build']
     dependsOn i
-}
-
-build.dependsOn nodeBuild
-
-node {
-    version = '10.16.0'
-    yarnVersion = '1.17.3'
-    download = true
 }

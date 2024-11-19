@@ -1,4 +1,4 @@
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {TrackControlComponent} from './track-control.component';
 
@@ -6,7 +6,7 @@ describe('TrackControlComponent', () => {
     let component: TrackControlComponent;
     let fixture: ComponentFixture<TrackControlComponent>;
 
-    beforeEach(async(() => {
+    beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             declarations: [TrackControlComponent]
         })
