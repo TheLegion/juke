@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {
@@ -197,7 +198,9 @@ public class PlayerService {
             track = chooseRandom();
         }
 
-        List<Track> tracksToRemove = playList.stream().filter(x -> x.getState() == TrackState.Failed).toList();
+        List<Track> tracksToRemove = playList.stream()
+                                             .filter(x -> x.getState() == TrackState.Failed)
+                                             .collect(Collectors.toList());
         if (!tracksToRemove.isEmpty()) {
             playList.removeAll(tracksToRemove);
             notifyPlaylist();

@@ -1,17 +1,25 @@
+:host {
+    --mdc-slider-inactive-track-height: 1px;
+    --mdc-slider-active-track-height: 2px;
+    --mdc-slider-handle-width: 10px;
+    --mdc-slider-handle-height: 10px;
+    --mat-card-title-text-line-height: 1.2;
+}
+
 audio {
-  display: none;
+    display: none;
 }
 
 .duration-info {
-  display: flex;
-  margin: 0 10px;
+    display: flex;
+    margin: 0 10px;
 }
 
-.mat-mdc-card {
-  padding: 4px 8px;
+mat-card {
+    padding: 4px 8px;
 }
 
-.mat-mdc-card-header,
-.mat-mdc-card-actions {
-  padding: 0;
+mat-card-header,
+mat-card-actions {
+    padding: 0 !important;
 }
