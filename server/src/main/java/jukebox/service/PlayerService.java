@@ -1,5 +1,8 @@
 package jukebox.service;
 
+import jakarta.servlet.ServletOutputStream;
+import java.util.stream.Collectors;
+import javax.sound.sampled.Mixer.Info;
 import jukebox.api.TrackPosition;
 import jukebox.core.ThreadPlayer;
 import jukebox.entities.PlayerState;
@@ -7,13 +10,13 @@ import jukebox.entities.Track;
 import jukebox.entities.TrackSource;
 import jukebox.entities.TrackState;
 import jukebox.service.providers.DataProvider;
+import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.ServletOutputStream;
 import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +30,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PlayerService {
 
@@ -53,18 +57,21 @@ public class PlayerService {
     ) {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
-        printMixersToConsole();
+
         Mixer.Info mixerInfo = Arrays.stream(AudioSystem.getMixerInfo())
                                      .filter(mixer -> mixer.getName().equals(audioName))
                                      .findFirst()
                                      .orElse(null);
-        Mixer mixer = AudioSystem.getMixer(mixerInfo);
+        Mixer selectedMixer = AudioSystem.getMixer(mixerInfo);
+        printMixersToLog(selectedMixer);
+
         try {
-            outline = mixer.getLine(mixer.getSourceLineInfo()[0]);
+            outline = selectedMixer.getLine(selectedMixer.getSourceLineInfo()[0]);
         }
         catch (LineUnavailableException e) {
             throw new RuntimeException(e);
         }
+
         try {
             outline.open();
             FloatControl volumeControl = (FloatControl) outline.getControl(FloatControl.Type.MASTER_GAIN);
@@ -259,8 +266,13 @@ public class PlayerService {
         notifyCurrentTrack();
     }
 
-    private void printMixersToConsole() {
-        Arrays.stream(AudioSystem.getMixerInfo()).forEach(mixer -> System.out.println(mixer.getName()));
+    private void printMixersToLog(Mixer selectedMixer) {
+        log.info("Доступные устройства вывода: \n{}", Arrays.stream(AudioSystem.getMixerInfo())
+                                                            .map(Info::getName)
+                                                            .map("\"%s\""::formatted)
+                                                            .collect(Collectors.joining(", ", "[", "]")));
+
+        log.info("Выбранное устройство вывода: {}", selectedMixer.getMixerInfo().getName());
     }
 
     private float volumeToDb(float volume, float min, float max) {
