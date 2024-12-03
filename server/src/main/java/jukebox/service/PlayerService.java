@@ -56,7 +56,20 @@ public class PlayerService {
     ) {
         this.dataProviders = dataProviders;
         this.cacheDir = cacheDir;
-        outline = getLine(audioName);
+
+        Mixer.Info mixerInfo = Arrays.stream(AudioSystem.getMixerInfo())
+                                     .filter(mixer -> mixer.getName().equals(audioName))
+                                     .findFirst()
+                                     .orElse(null);
+        Mixer selectedMixer = AudioSystem.getMixer(mixerInfo);
+        printMixersToLog(selectedMixer);
+
+        try {
+            outline = selectedMixer.getLine(selectedMixer.getSourceLineInfo()[0]);
+        }
+        catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             outline.open();
@@ -250,23 +263,13 @@ public class PlayerService {
         notifyCurrentTrack();
     }
 
-    private Line getLine(String name) {
-        Mixer.Info mixerInfo = Arrays.stream(AudioSystem.getMixerInfo())
-                                     .filter(mixer -> mixer.getName().equals(name))
-                                     .findFirst()
-                                     .orElse(null);
+    private void printMixersToLog(Mixer selectedMixer) {
         log.info("Доступные устройства вывода: \n{}", Arrays.stream(AudioSystem.getMixerInfo())
                                                             .map(Info::getName)
                                                             .map("\"%s\""::formatted)
                                                             .collect(Collectors.joining(", ", "[", "]")));
 
-        Mixer mixer = AudioSystem.getMixer(mixerInfo);
-        log.info("Выбранное устройство вывода: {}", mixer.getMixerInfo().getName());
-        try {
-            return mixer.getLine(mixer.getSourceLineInfo()[0]);
-        } catch (LineUnavailableException e) {
-            throw new RuntimeException(e);
-        }
+        log.info("Выбранное устройство вывода: {}", selectedMixer.getMixerInfo().getName());
     }
 
     private float volumeToDb(float volume, float min, float max) {
